@@ -68,7 +68,7 @@ function lobbyView(room) {
     code: room.code,
     joinUrl: `${room.base}/play?room=${room.code}`,
     hostId: room.hostId,
-    players: room.players.map((p) => ({ id: p.id, name: p.name, connected: p.sockets.size > 0 })),
+    players: room.players.map((p) => ({ id: p.id, name: p.name, bot: !!p.bot, connected: p.bot || p.sockets.size > 0 })),
     inGame: !!room.game,
   };
 }
@@ -82,6 +82,42 @@ function broadcast(room) {
     for (const sid of p.sockets) io.to(sid).emit('state', { lobby, game: pub, me: { id: p.id, name: p.name, isHost: p.id === room.hostId }, mine });
   }
   schedule(room);
+  driveBots(room);
+}
+
+// ---- practice bots: random players so you can try the game with fewer people ----
+const BOT_NAMES = ['Ada', 'Max', 'Rosa', 'Otto', 'Clara', 'Felix', 'Greta', 'Hans', 'Ida'];
+function driveBots(room) {
+  const g = room.game;
+  if (!g) return;
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  for (const p of room.players) {
+    if (!p.bot) continue;
+    const v = g.privateView(p.id);
+    const a = v && v.action;
+    if (!a) continue;
+    const key = a.type + ':' + g.phase + ':' + (g.announce && g.announce.at);
+    if (p.botKey === key) continue;
+    if (a.type === 'vote' && a.mine !== null) continue;
+    if (a.type === 'ready' && a.done) continue;
+    if (['dead', 'gameover'].includes(a.type)) continue;
+    p.botKey = key;
+    const delay = a.type === 'ready' ? 600 : 1200 + Math.random() * 1800;
+    setTimeout(() => {
+      if (room.game !== g) return;
+      let r;
+      if (a.type === 'ready') r = g.markReady(p.id);
+      if (a.type === 'nominate') r = g.nominate(p.id, pick(a.options).id);
+      if (a.type === 'vote') r = g.vote(p.id, Math.random() < 0.65);
+      if (a.type === 'discard') r = g.presidentDiscard(p.id, Math.floor(Math.random() * 3));
+      if (a.type === 'enact') r = a.canVeto && Math.random() < 0.25 ? g.proposeVeto(p.id) : g.chancellorEnact(p.id, Math.floor(Math.random() * 2));
+      if (a.type === 'vetoAnswer') r = g.answerVeto(p.id, Math.random() < 0.5);
+      if (a.type === 'peek') r = g.usePower(p.id, null);
+      if (a.type === 'power') r = g.usePower(p.id, pick(a.options).id);
+      if (a.type === 'investigation') r = g.finishInvestigation(p.id);
+      broadcast(room);
+    }, delay);
+  }
 }
 
 // automatic transitions after reveal screens
@@ -159,6 +195,13 @@ io.on('connection', (socket) => {
     const j = i + dir;
     if (i < 0 || j < 0 || j >= room.players.length) return;
     [room.players[i], room.players[j]] = [room.players[j], room.players[i]];
+  }));
+  socket.on('host:addBot', guard(() => {
+    if (!isHost() || room.game) return;
+    if (room.players.length >= 10) return 'The room is full (10 players).';
+    const used = new Set(room.players.map((p) => p.name));
+    const name = BOT_NAMES.map((n) => n + ' (bot)').find((n) => !used.has(n));
+    room.players.push({ id: crypto.randomUUID().slice(0, 8), token: null, name, bot: true, sockets: new Set() });
   }));
   socket.on('host:kick', guard((id) => {
     if (!isHost() || room.game) return;
