@@ -1,33 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Lora:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Germania+One&family=Montserrat:wght@500;600;700&display=swap');
 
 :root {
-  --ink: #1d1a17;
-  --ink-2: #2a2622;
-  --paper: #f1e6cf;
-  --paper-2: #e4d5b4;
-  --lib: #2f6f8f;
-  --lib-light: #cfe3ec;
-  --fas: #b5361f;
-  --fas-light: #f2d0c6;
-  --gold: #d9a441;
-  --muted: #9b8f7d;
-  --head: 'Oswald', Impact, 'Arial Narrow', sans-serif;
-  --body: 'Lora', Georgia, serif;
+  --ink: #241f1a;
+  --ink-2: #3a332c;
+  --paper: #f6eee3;
+  --paper-2: #e2d6c3;
+  --lib: #3f8492;
+  --lib-light: #cfe6ea;
+  --fas: #e05b2b;
+  --fas-dark: #b4431a;
+  --fas-light: #f8d6c8;
+  --gold: #f6b53f;
+  --muted: #a39887;
+  --head: 'Germania One', Impact, serif;
+  --body: 'Montserrat', 'Segoe UI', sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--ink); color: var(--paper); font-family: var(--body); }
-h1, h2, h3, .head { font-family: var(--head); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin: 0; }
+h1, h2, h3, .head { font-family: var(--head); letter-spacing: 0.04em; font-weight: 400; margin: 0; }
 button { font: inherit; cursor: pointer; }
 svg { width: 1em; height: 1em; vertical-align: -0.12em; }
 
-/* policy tiles */
-.policy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25em;
-  border-radius: 0.5em; border: 0.18em solid var(--paper); aspect-ratio: 5 / 7; font-family: var(--head);
-  text-transform: uppercase; letter-spacing: 0.08em; }
-.policy img { width: 55%; }
-.policy small { font-size: 0.6em; opacity: 0.7; }
-.policy.lib { background: var(--lib); color: var(--paper); }
-.policy.fas { background: var(--fas); color: var(--paper); }
+/* policy tiles (official art) */
+.policy { display: block; aspect-ratio: 576 / 772; border-radius: 0.5em; }
+.policy img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0.25em 0.4em rgba(0,0,0,0.35)); }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--fas); color: var(--paper);
   padding: 12px 18px; border-radius: 8px; font-family: var(--head); letter-spacing: 0.04em; z-index: 99; max-width: 90vw; text-align: center; }

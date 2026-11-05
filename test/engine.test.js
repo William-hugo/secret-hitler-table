@@ -3,7 +3,7 @@ const assert = require('assert');
 const { Game } = require('../game');
 
 const mk = (n) => Array.from({ length: n }, (_, i) => ({ id: 'p' + i, name: 'P' + i }));
-function readyAll(g) { g.players.forEach((p) => g.markReady(p.id)); }
+function readyAll(g) { g.players.forEach((p) => g.markReady(p.id)); g.endNight(); }
 function voteAll(g, ja) { g.alive().forEach((p) => g.vote(p.id, ja)); }
 
 // role distribution + knowledge
@@ -18,6 +18,10 @@ for (const n of [5, 6, 7, 8, 9, 10]) {
   assert.strictEqual(g.privateView(f.id).teammates.length, c('fascist')); // other fascists + hitler
   const l = g.players.find((p) => p.role === 'liberal');
   assert.strictEqual(g.privateView(l.id).teammates.length, 0);
+  const gc = new Game(mk(n), { classic: true });
+  assert.ok(gc.players.every((p) => gc.privateView(p.id).teammates.length === 0), 'classic hides teams');
+  const arts = g.players.filter((p) => p.role === 'liberal').map((p) => p.art);
+  assert.strictEqual(new Set(arts).size, arts.length, 'unique liberal art');
   assert.strictEqual(g.deck.length, 17);
 }
 

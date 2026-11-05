@@ -12,14 +12,14 @@ const ICON = {
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>',
 };
-const ROLE_ART = { liberal: '/role-art/liberal', fascist: '/role-art/fascist', hitler: '/role-art/hitler' };
 const ROLE_NAME = { liberal: 'Liberal', fascist: 'Fascist', hitler: 'Hitler' };
+const ROLE_ART = { liberal: '/assets/role-liberal-1.png', fascist: '/assets/role-fascist-1.png', hitler: '/assets/role-hitler.png' };
+function roleCardSrc(role, art) { return role === 'hitler' ? '/assets/role-hitler.png' : `/assets/role-${role}-${art || 1}.png`; }
+function partyCardSrc(party) { return `/assets/party-membership-${party}.png`; }
 
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function policyCard(p, extra = '') {
   const lib = p === 'L';
-  return `<div class="policy ${lib ? 'lib' : 'fas'} ${extra}">
-    <img src="/role-art/${lib ? 'liberal' : 'fascist'}-policy" alt="">
-    <span>${lib ? 'Liberal' : 'Fascist'}</span><small>article</small></div>`;
+  return `<div class="policy ${lib ? 'lib' : 'fas'} ${extra}"><img src="/assets/policy-${lib ? 'liberal' : 'fascist'}.png" alt="${lib ? 'Liberal' : 'Fascist'} policy"></div>`;
 }

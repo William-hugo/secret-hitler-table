@@ -87,25 +87,18 @@ Talking, accusing and lying all happen out loud at the table, like the real game
 - If a phone locks or refreshes, the player is put back in their seat automatically.
 - The host can end a game early, play again with the same seats, or go back to the lobby.
 
-## Changing the artwork
+## Night phase and narration
 
-Put image files in `public/art/custom/` and they replace the built-in art everywhere (TV, phones, cards). Use these names, any of `.png`, `.jpg`, `.webp` or `.svg`:
+After everyone has looked at their role, the TV plays the official narration for your player count
+(the "everybody close your eyes" setup ritual). The takes are picked at random each game, like the official app.
+- Click the TV page once before the game so the browser allows sound.
+- The host can skip the narration from their phone, and the TV has a Skip button.
+- **Classic night phase** (host's lobby setting): phones don't show the Fascist team, so players find each other with eyes closed, exactly like the board game.
 
-| File name | Used for |
-|---|---|
-| `liberal` | Liberal role card + Liberal board icon |
-| `fascist` | Fascist role card + Fascist board icon |
-| `hitler` | Hitler role card + logo |
-| `liberal-policy` | Liberal policy tiles (falls back to `liberal`) |
-| `fascist-policy` | Fascist policy tiles (falls back to `fascist`) |
+## Artwork and sounds
 
-On the hosted site, upload them on GitHub (open `public/art/custom` → Add file → Upload files). The site updates itself in about a minute.
-
-## Sounds
-
-Built-in sound effects play on the TV. To use your own, put audio files (`.mp3`, `.ogg`, `.wav`, `.m4a`) in `public/sounds/custom/` with these names:
-`roles`, `vote-pass`, `vote-fail`, `liberal-policy`, `fascist-policy`, `chaos`, `shuffle`, `execution`, `liberals-win`, `fascists-win` (for example `vote-pass.mp3`).
-The **Narrator** button reads each step aloud with the best voice your TV browser has.
+The boards, cards, ballots and envelope come from Secret Hitler Online (see CREDITS.md) in `public/assets/`.
+To swap an image, replace the file with one of the same name. Narration files are in `public/narration/`.
 
 ## Settings
 
@@ -114,5 +107,8 @@ The **Narrator** button reads each step aloud with the best voice your TV browse
 - `npm test` runs the rules tests and 4,000 simulated games (needs `npm install` first).
 
 ## Credits and license
+
+See CREDITS.md for the artwork and narration sources.
+
 
 Fan-made adaptation of *Secret Hitler* by Max Temkin, Mike Boxleiter, Tommy Maranges and Mac Schubert, used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/). This version is free and must stay non-commercial — don't sell it or charge to play. The artwork in this folder is original and isn't the official game art.

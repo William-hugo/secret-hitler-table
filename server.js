@@ -65,6 +65,7 @@ const T = {
   voteResult: Number(process.env.T_VOTE || 9000),
   enacted: Number(process.env.T_ENACT || 7500),
   executed: Number(process.env.T_EXEC || 7000),
+  night: Number(process.env.T_NIGHT || 240000), // safety: night phase ends on its own if the TV never reports back
 };
 
 const rooms = new Map(); // code -> room
@@ -79,7 +80,7 @@ function makeCode() {
 function createRoom(base) {
   if (rooms.size >= 500) for (const [c, r] of rooms) if (r.players.every((p) => p.sockets.size === 0)) { rooms.delete(c); break; }
   const code = makeCode();
-  const room = { code, base, players: [], hostId: null, game: null, timer: null, created: Date.now() };
+  const room = { code, base, players: [], hostId: null, options: { classic: false }, game: null, timer: null, created: Date.now() };
   rooms.set(code, room);
   return room;
 }
@@ -91,6 +92,7 @@ function lobbyView(room) {
     hostId: room.hostId,
     players: room.players.map((p) => ({ id: p.id, name: p.name, bot: !!p.bot, connected: p.bot || p.sockets.size > 0 })),
     inGame: !!room.game,
+    options: room.options,
   };
 }
 
@@ -149,7 +151,7 @@ function schedule(room) {
   if (room.timerKey === key) return;
   clearTimeout(room.timer);
   room.timerKey = key;
-  const step = { voteResult: ['afterVoteResult', T.voteResult], enacted: ['afterEnacted', T.enacted], executed: ['afterExecuted', T.executed] }[g.phase];
+  const step = { voteResult: ['afterVoteResult', T.voteResult], enacted: ['afterEnacted', T.enacted], executed: ['afterExecuted', T.executed], night: ['endNight', T.night] }[g.phase];
   if (step) {
     room.timer = setTimeout(() => {
       if (room.game !== g) return;
@@ -204,11 +206,14 @@ io.on('connection', (socket) => {
   };
   const isHost = () => room && player && room.hostId === player.id;
 
+  socket.on('tv:nightDone', () => {
+    if (room && room.game && room.game.phase === 'night' && socket.rooms.has(`tv:${room.code}`)) { room.game.endNight(); broadcast(room); }
+  });
   socket.on('host:start', guard(() => {
     if (!isHost()) return 'Only the host can start.';
     if (room.game && room.game.phase !== 'gameover') return 'A game is already running.';
     if (room.players.length < 5) return 'You need at least 5 players.';
-    room.game = new Game(room.players.map((p) => ({ id: p.id, name: p.name })));
+    room.game = new Game(room.players.map((p) => ({ id: p.id, name: p.name })), { classic: room.options.classic });
   }));
   socket.on('host:move', guard((id, dir) => {
     if (!isHost() || room.game) return;
@@ -224,6 +229,11 @@ io.on('connection', (socket) => {
     const name = BOT_NAMES.map((n) => n + ' (bot)').find((n) => !used.has(n));
     room.players.push({ id: crypto.randomUUID().slice(0, 8), token: null, name, bot: true, sockets: new Set() });
   }));
+  socket.on('host:option', guard((key, val) => {
+    if (!isHost() || room.game) return;
+    if (key === 'classic') room.options.classic = !!val;
+  }));
+  socket.on('host:skipNight', guard(() => { if (!isHost()) return 'Only the host can skip.'; return room.game && room.game.endNight(); }));
   socket.on('host:kick', guard((id) => {
     if (!isHost() || room.game) return;
     room.players = room.players.filter((p) => p.id !== id);

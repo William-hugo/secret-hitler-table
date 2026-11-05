@@ -7,154 +7,146 @@
 <link rel="stylesheet" href="/style.css">
 <style>
   html { font-size: min(1.04vw, 1.85vh); }
-  body { min-height: 100vh; overflow: hidden; }
-  #app { height: 100vh; display: flex; flex-direction: column; padding: 1rem 1.4rem 1.8rem; gap: 0.9rem; }
+  body { min-height: 100vh; overflow: hidden; background: #2b2621; }
+  #app { height: 100vh; display: flex; flex-direction: column; padding: 1rem 1.4rem 1.8rem; gap: 0.8rem; }
   /* top bar */
   .top { display: flex; align-items: stretch; gap: 1rem; }
-  .brand { display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; color: var(--paper); }
-  .brand img { width: 2.2rem; }
-  .banner { flex: 1; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.6rem 1.1rem; display: flex; flex-direction: column; justify-content: center; min-height: 5rem; }
-  .banner h2 { font-size: 1.7rem; }
-  .banner p { margin: 0.1rem 0 0; font-size: 1.1rem; }
-  .banner .talk { font-size: 0.95rem; color: #6b5f4d; margin-top: 0.25rem; display: flex; gap: 0.8rem; align-items: center; }
-  .banner .talk b { color: var(--fas); font-family: var(--head); letter-spacing: 0.05em; }
-  .banner.good { background: #d8e7c9; } .banner.bad { background: var(--fas-light); }
-  .banner.liberal { background: var(--lib); color: var(--paper); } .banner.fascist { background: var(--fas); color: var(--paper); }
+  .banner { flex: 1; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.55rem 1.1rem; display: flex; flex-direction: column; justify-content: center; min-height: 5rem; border-bottom: 0.3rem solid var(--paper-2); }
+  .banner h2 { font-size: 2rem; }
+  .banner p { margin: 0.1rem 0 0; font-size: 1.05rem; font-weight: 500; }
+  .banner .talk { font-size: 0.95rem; color: #6b5f4d; margin-top: 0.3rem; display: flex; gap: 0.8rem; align-items: center; }
+  .banner .talk b { color: var(--fas); font-family: var(--head); font-weight: 400; font-size: 1.15rem; }
+  .banner.good { background: #dcebd0; } .banner.bad { background: var(--fas-light); }
+  .banner.liberal { background: var(--lib); color: #fff; border-color: #2d6470; } .banner.fascist { background: var(--fas); color: #fff; border-color: var(--fas-dark); }
   .banner.anim { animation: slidein 0.5s ease both; }
   .gov { display: flex; gap: 0.6rem; }
   .gov .g { border-radius: 0.6rem; padding: 0.5rem 0.9rem; display: flex; flex-direction: column; justify-content: center; min-width: 11rem; }
-  .gov .g small { font-family: var(--head); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.75rem; opacity: 0.85; display: flex; gap: 0.3rem; align-items: center; }
-  .gov .g b { font-family: var(--head); font-size: 1.6rem; letter-spacing: 0.03em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 13rem; }
+  .gov .g small { font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.7rem; opacity: 0.85; display: flex; gap: 0.3rem; align-items: center; }
+  .gov .g b { font-family: var(--head); font-weight: 400; font-size: 1.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 13rem; }
   .gov .pres { background: var(--gold); color: var(--ink); }
-  .gov .chan { background: var(--paper); color: var(--ink); border: 0.2rem solid var(--ink-2); }
+  .gov .chan { background: var(--paper); color: var(--ink); }
   .gov .chan.nom { background: transparent; color: var(--paper); border: 0.2rem dashed var(--gold); animation: pulse 1.6s ease-in-out infinite; }
-  .gov .chan.empty { background: transparent; color: var(--muted); border: 0.2rem dashed #4a443d; }
-  .code { text-align: center; font-family: var(--head); color: var(--muted); font-size: 0.8rem; letter-spacing: 0.1em; display: flex; flex-direction: column; justify-content: center; }
-  .code b { display: block; color: var(--paper); font-size: 1.7rem; letter-spacing: 0.15em; }
+  .gov .chan.empty { background: transparent; color: var(--muted); border: 0.2rem dashed #5a5248; }
+  .code { text-align: center; color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; flex-direction: column; justify-content: center; }
+  .code b { display: block; color: var(--paper); font-family: var(--head); font-weight: 400; font-size: 2rem; letter-spacing: 0.15em; }
   /* main */
-  .main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 1rem; min-height: 0; }
-  .boards { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .track { flex: 1; border-radius: 0.8rem; padding: 0.6rem 1rem 0.7rem; display: flex; flex-direction: column; min-height: 0; }
-  .track h3 { font-size: 1.1rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
-  .track h3 img { width: 1.6rem; }
-  .track h3 .meta { margin-left: auto; font-family: var(--body); text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 0.85rem; }
-  .track.lib { background: var(--lib-light); color: #173b4d; border: 0.3rem solid var(--lib); }
-  .track.fas { background: var(--fas-light); color: #5a1a0e; border: 0.3rem solid var(--fas); }
-  .slots { flex: 1; display: flex; gap: 0.8rem; justify-content: center; align-items: center; min-height: 0; }
-  .slot { height: 100%; max-height: 15rem; aspect-ratio: 5 / 7; border-radius: 0.5rem; border: 0.15rem dashed currentColor; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: var(--head); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; padding: 0.3rem; gap: 0.3rem; position: relative; }
-  .slot svg { width: 2.2rem; height: 2.2rem; }
-  .slot .policy { width: 100%; height: 100%; font-size: 1rem; border-color: rgba(0,0,0,0.25); }
-  .slot.filled { border: none; padding: 0; }
-  .slot.new .policy { animation: land 0.9s cubic-bezier(.2,.9,.3,1.3) both, glow 2.4s ease 0.9s; }
-  .slot.win { border-style: solid; }
-  .slot.next { border-style: solid; border-width: 0.2rem; animation: nextp 2s ease-in-out infinite; }
-  .hz { margin-top: 0.5rem; font-size: 0.9rem; display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-  .hz span { padding: 0.2rem 0.6rem; border-radius: 0.3rem; background: rgba(0,0,0,0.08); }
-  .hz span.on { background: var(--fas); color: var(--paper); }
+  .main { flex: 1; display: grid; grid-template-columns: 12rem minmax(0, 1fr) 15rem; gap: 1rem; min-height: 0; }
   .side { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .box { background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 1rem; }
-  .box h4 { font-family: var(--head); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; color: var(--muted); margin: 0 0 0.6rem; font-weight: 600; }
-  .tracker .dots { display: flex; flex-direction: column; gap: 0.5rem; }
-  .tdot { display: flex; align-items: center; gap: 0.7rem; font-family: var(--head); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-size: 0.9rem; }
-  .tdot i { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 0.22rem solid #6f6659; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 1.1rem; color: #6f6659; flex: none; }
-  .tdot.on i { background: var(--gold); border-color: var(--gold); color: var(--ink); }
-  .tdot.on { color: var(--paper); }
-  .tdot.chaos i { border-color: var(--fas); color: var(--fas); }
-  .tdot.on.chaos i { background: var(--fas); color: var(--paper); }
-  .tdot.pop i { animation: popdot 0.7s ease both; }
-  .tracker .warn { margin-top: 0.6rem; background: var(--fas); color: var(--paper); border-radius: 0.4rem; padding: 0.4rem 0.6rem; font-size: 0.85rem; animation: pulse 1.4s ease-in-out infinite; }
-  .tracker .note { margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
-  .piles { display: flex; gap: 1rem; justify-content: space-around; }
-  .pile { text-align: center; font-family: var(--head); color: var(--muted); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
-  .stack { width: 3.6rem; height: 5rem; margin: 0 auto 0.4rem; position: relative; }
-  .stack span { position: absolute; inset: 0; border-radius: 0.35rem; background: #4a3a2a; border: 0.12rem solid var(--paper-2); }
-  .stack b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--paper); font-size: 1.5rem; z-index: 3; }
-  .stack.empty span { background: transparent; border-style: dashed; border-color: #5a5248; }
+  .box { background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 0.9rem; }
+  .box h4 { font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; color: var(--muted); margin: 0 0 0.6rem; }
+  .pile { position: relative; width: 7.5rem; margin: 0 auto; }
+  .pile img { width: 100%; display: block; filter: drop-shadow(0 0.3rem 0.4rem rgba(0,0,0,0.4)); }
+  .pile b { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; font-family: var(--head); font-weight: 400; font-size: 2.6rem; color: var(--ink); text-shadow: 0 0 0.4rem #fff; }
+  .pile.shuffling img { animation: riffle 0.6s ease-in-out 4; }
+  .tcall { text-align: center; }
+  .tcall .n { font-family: var(--head); font-size: 2.6rem; color: var(--paper); line-height: 1; }
+  .tcall .dots { display: flex; justify-content: center; gap: 0.5rem; margin: 0.4rem 0; }
+  .tcall .dots i { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 0.2rem solid #6f6659; }
+  .tcall .dots i.on { background: var(--gold); border-color: var(--gold); animation: popdot 0.6s ease both; }
+  .tcall .dots i.chaos { border-color: var(--fas); }
+  .tcall .warn { background: var(--fas); color: #fff; border-radius: 0.4rem; padding: 0.35rem 0.5rem; font-size: 0.8rem; font-weight: 600; animation: pulse 1.4s ease-in-out infinite; }
+  .tcall .note { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
   .log { flex: 1; font-size: 0.85rem; color: var(--paper-2); overflow: hidden; min-height: 0; }
-  .log div { padding: 0.2rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); line-height: 1.35; }
-  .log div:first-child { color: var(--paper); }
+  .log div { padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); line-height: 1.35; }
+  .log div:first-child { color: #fff; font-weight: 600; }
+  /* official boards */
+  .boards { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; min-height: 0; height: 100%; }
+  .board { position: relative; height: calc(50% - 0.4rem); aspect-ratio: 1683 / 650; max-width: 100%; }
+  .board > img.bg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0.4rem 0.6rem rgba(0,0,0,0.45)); }
+  .tile { position: absolute; width: 10%; top: 30%; }
+  .tile.new { animation: tiledrop 1.4s ease both, tileglow 2.5s ease 1.4s; }
+  .slotmark { position: absolute; width: 10%; top: 30%; height: 35.7%; border-radius: 0.5rem; box-shadow: 0 0 0 0.25rem rgba(246,181,63,0.9); animation: pulse 1.8s ease-in-out infinite; pointer-events: none; }
+  .tracker-token { position: absolute; top: 74%; width: 3.2%; transition: left 1.5s ease-in-out; filter: drop-shadow(0 0 0.5rem rgba(246,181,63,0.95)); }
+  .tracker-token.hot { animation: tokenpulse 1s ease-in-out infinite; }
   /* seats */
   .seats { display: flex; gap: 0.6rem; justify-content: center; }
-  .seat { flex: 1; max-width: 13rem; min-width: 0; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.5rem 0.6rem 0.55rem; position: relative; display: flex; flex-direction: column; gap: 0.3rem; border: 0.25rem solid transparent; transition: transform 0.3s; }
-  .seat .nm { font-weight: 600; font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .seat .no { font-family: var(--head); color: var(--muted); font-size: 0.75rem; letter-spacing: 0.08em; }
-  .seat .tags { display: flex; gap: 0.25rem; flex-wrap: wrap; min-height: 1.4rem; }
+  .seat { flex: 1; max-width: 13rem; min-width: 0; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.45rem 0.6rem 0.5rem; position: relative; display: flex; flex-direction: column; gap: 0.25rem; border: 0.25rem solid transparent; transition: transform 0.3s; }
+  .seat .nm { font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seat .no { color: var(--muted); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .seat .tags { display: flex; gap: 0.25rem; flex-wrap: wrap; min-height: 1.4rem; align-items: center; }
+  .seat .vote { position: absolute; right: 0.3rem; top: -1.1rem; height: 1.8rem; animation: popdot 0.5s ease both; }
   .seat.pres { border-color: var(--gold); transform: translateY(-0.4rem); }
   .seat.chan { border-color: var(--ink); transform: translateY(-0.4rem); }
   .seat.nom { border: 0.25rem dashed var(--gold); animation: pulse 1.6s ease-in-out infinite; }
   .seat.dead { background: #4a443d; color: #8d8478; }
   .seat.dead .nm { text-decoration: line-through; }
-  .seat.off .nm::after { content: ' · offline'; font-weight: 400; font-size: 0.75rem; color: var(--fas); }
+  .seat.off .nm::after { content: ' · offline'; font-weight: 500; font-size: 0.75rem; color: var(--fas); }
   .seat .voted { position: absolute; top: -0.6rem; right: -0.4rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #3b6d11; color: #fff; display: flex; align-items: center; justify-content: center; animation: popdot 0.5s ease both; }
-  .tag { font-family: var(--head); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 0.3rem; display: inline-flex; gap: 0.25rem; align-items: center; white-space: nowrap; }
+  .tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 0.3rem; display: inline-flex; gap: 0.25rem; align-items: center; white-space: nowrap; }
   .tag.p { background: var(--gold); color: var(--ink); } .tag.c { background: var(--ink); color: var(--paper); }
   .tag.n { background: transparent; color: var(--ink); border: 1px dashed var(--ink); }
-  .tag.t { background: #ddd2bd; color: #6b5f4d; } .tag.s { background: var(--lib); color: #fff; } .tag.b { background: #e9e0cc; color: #8d8478; }
+  .tag.t { background: #e2d6c3; color: #6b5f4d; } .tag.s { background: var(--lib); color: #fff; } .tag.b { background: #e9e0cc; color: #8d8478; }
   /* overlays */
-  .ov { position: fixed; inset: 0; background: rgba(20,17,14,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.3rem; z-index: 5; text-align: center; padding: 2rem; animation: fade 0.35s ease both; }
-  .ov h1 { font-size: 3.6rem; animation: slidein 0.5s ease both; }
-  .ov p { font-size: 1.4rem; max-width: 56rem; margin: 0; color: var(--paper-2); }
-  .ballots { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; max-width: 86rem; }
-  .ballot { width: 8.5rem; text-align: center; }
-  .ballot .card { aspect-ratio: 5/7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--head); font-size: 2.2rem; border: 0.2rem solid var(--paper); animation: flip 0.7s ease both; backface-visibility: hidden; }
-  .ballot .card.ja { background: var(--paper); color: var(--ink); } .ballot .card.nein { background: var(--ink-2); color: var(--paper); }
-  .ballot div:last-child { margin-top: 0.4rem; font-size: 1.1rem; }
-  .tally { font-family: var(--head); font-size: 2rem; letter-spacing: 0.05em; opacity: 0; animation: fade 0.5s ease both; }
-  .bigcard { width: 15rem; font-size: 1.7rem; animation: drop 0.9s cubic-bezier(.2,.9,.3,1.25) both; }
+  .ov { position: fixed; inset: 0; background: rgba(28,24,20,0.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.3rem; z-index: 5; text-align: center; padding: 2rem; animation: fade 0.35s ease both; }
+  .ov h1 { font-size: 4.2rem; color: #fff; animation: slidein 0.5s ease both; }
+  .ov p { font-size: 1.35rem; max-width: 58rem; margin: 0; color: var(--paper-2); line-height: 1.5; }
+  .ballots { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; max-width: 90rem; }
+  .ballot { text-align: center; }
+  .ballot img { width: 100%; display: block; animation: flip 0.7s ease both; filter: drop-shadow(0 0.3rem 0.4rem rgba(0,0,0,0.5)); }
+  .ballot div { margin-top: 0.4rem; font-size: 1.1rem; font-weight: 600; color: var(--paper); }
+  .tally { font-family: var(--head); font-size: 2.4rem; color: #fff; opacity: 0; animation: fade 0.5s ease both; }
+  .bigcard { width: 16rem; animation: drop 0.9s cubic-bezier(.2,.9,.3,1.25) both; }
   .roles { display: grid; gap: 1rem; justify-content: center; }
-  .rcard { background: var(--paper); color: var(--ink); border-radius: 0.8rem; padding: 0.8rem 0.6rem; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; animation: flip 0.7s ease both; border: 0.3rem solid transparent; }
-  .rcard img { width: 60%; }
-  .rcard b { font-size: 1.25rem; font-weight: 600; } .rcard span { font-family: var(--head); text-transform: uppercase; letter-spacing: 0.08em; font-size: 1rem; }
-  .rcard.liberal { border-color: var(--lib); } .rcard.liberal span { color: var(--lib); }
-  .rcard.fascist { border-color: var(--fas); } .rcard.fascist span { color: var(--fas); }
-  .rcard.hitler { background: #1d1a17; color: var(--paper); border-color: var(--fas); } .rcard.hitler span { color: #ff8a6b; }
-  .rcard.dead { opacity: 0.6; } .rcard small { font-size: 0.8rem; color: #8d8478; }
-  .shuffle { position: fixed; right: 2rem; bottom: 11rem; z-index: 6; background: var(--ink-2); border: 0.2rem solid var(--gold); border-radius: 0.8rem; padding: 1rem 1.4rem; display: flex; align-items: center; gap: 1.2rem; animation: slidein 0.4s ease both; }
-  .shuffle .fan { width: 6rem; height: 5rem; position: relative; }
-  .shuffle .fan span { position: absolute; left: 1.5rem; top: 0; width: 3.4rem; height: 4.8rem; border-radius: 0.35rem; background: #4a3a2a; border: 0.12rem solid var(--paper-2); animation: riffle 1s ease-in-out infinite; }
-  .shuffle .fan span:nth-child(2) { animation-delay: 0.12s; } .shuffle .fan span:nth-child(3) { animation-delay: 0.24s; } .shuffle .fan span:nth-child(4) { animation-delay: 0.36s; }
-  .shuffle h3 { font-size: 1.4rem; } .shuffle p { margin: 0.2rem 0 0; color: var(--paper-2); font-size: 0.95rem; }
+  .rcard { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; animation: flip 0.7s ease both; }
+  .rcard img { width: 100%; display: block; border-radius: 0.6rem; filter: drop-shadow(0 0.3rem 0.5rem rgba(0,0,0,0.5)); }
+  .rcard b { font-size: 1.15rem; color: #fff; }
+  .rcard.dead img { filter: grayscale(0.8) brightness(0.7); } .rcard small { font-size: 0.75rem; color: var(--paper-2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .vict { width: 36rem; animation: slidein 0.6s ease both; }
+  .envelope { width: 13rem; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0.6rem 0.8rem rgba(0,0,0,0.5)); }
+  .night { background: radial-gradient(ellipse at center, #1c2733 0%, #0b0e12 75%); }
+  .moon { width: 9rem; height: 9rem; border-radius: 50%; box-shadow: 1.6rem 0.9rem 0 0 #e9e2c8; transform: translateX(-1.6rem); animation: float 4s ease-in-out infinite; }
+  .bar { width: 36rem; height: 0.5rem; background: rgba(255,255,255,0.12); border-radius: 1rem; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width 0.4s linear; }
+  .btn { background: var(--fas); color: #fff; border: none; border-bottom: 0.3rem solid var(--fas-dark); border-radius: 0.5rem; padding: 0.7rem 1.6rem; font-family: var(--head); font-size: 1.5rem; cursor: pointer; }
+  .btn.ghost { background: transparent; border: 0.15rem solid #5a5248; color: var(--muted); font-size: 1rem; padding: 0.4rem 1rem; }
+  .shuffle { position: fixed; left: 50%; top: 7rem; transform: translateX(-50%); z-index: 6; background: var(--ink-2); border: 0.2rem solid var(--gold); border-radius: 0.8rem; padding: 0.9rem 1.4rem; display: flex; align-items: center; gap: 1.2rem; animation: slidein 0.4s ease both; }
+  .shuffle .fan { width: 7rem; height: 5rem; position: relative; }
+  .shuffle .fan img { position: absolute; left: 2rem; top: 0; width: 3.4rem; animation: riffle 1s ease-in-out infinite; }
+  .shuffle .fan img:nth-child(2) { animation-delay: 0.12s; } .shuffle .fan img:nth-child(3) { animation-delay: 0.24s; } .shuffle .fan img:nth-child(4) { animation-delay: 0.36s; }
+  .shuffle h3 { font-size: 1.7rem; color: #fff; } .shuffle p { margin: 0.2rem 0 0; color: var(--paper-2); font-size: 0.95rem; }
   @keyframes riffle { 0%,100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-1.6rem) rotate(-12deg); } 50% { transform: translateX(1.6rem) rotate(12deg); } 75% { transform: translateX(0) rotate(0); } }
   @keyframes flip { from { transform: perspective(900px) rotateY(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes drop { from { transform: translateY(-40vh) rotate(-10deg); opacity: 0; } to { transform: none; opacity: 1; } }
-  @keyframes land { from { transform: translateY(-12rem) rotate(-8deg) scale(1.3); opacity: 0; } to { transform: none; opacity: 1; } }
-  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(217,164,65,0); } 30% { box-shadow: 0 0 1.4rem 0.5rem rgba(217,164,65,0.9); } }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
-  @keyframes nextp { 0%,100% { box-shadow: inset 0 0 0 0 rgba(0,0,0,0); } 50% { box-shadow: inset 0 0 0 0.25rem rgba(0,0,0,0.12); } }
+  @keyframes tiledrop { 0% { opacity: 0; transform: translateY(-60%) scale(1.25); } 70% { opacity: 1; transform: translateY(-60%) scale(1.25); } 100% { transform: none; } }
+  @keyframes tileglow { 0%,100% { filter: none; } 30% { filter: drop-shadow(0 0 1rem rgba(246,181,63,1)); } }
+  @keyframes tokenpulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes popdot { 0% { transform: scale(0.3); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
   @keyframes slidein { from { transform: translateY(-0.8rem); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-0.8rem); } }
   /* lobby */
   .lobby { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
-  .join { background: var(--paper); color: var(--ink); border-radius: 1rem; padding: 2rem; text-align: center; animation: slidein 0.5s ease both; }
-  .join img.qr { width: 17rem; image-rendering: pixelated; }
-  .join .url { font-family: var(--head); font-size: 1.2rem; letter-spacing: 0.04em; margin-top: 0.6rem; word-break: break-all; }
-  .join .bigcode { font-family: var(--head); font-size: 4.5rem; letter-spacing: 0.25em; color: var(--fas); line-height: 1.1; }
+  .join { background: var(--paper); color: var(--ink); border-radius: 1rem; padding: 1.6rem 2rem; text-align: center; animation: slidein 0.5s ease both; }
+  .join img.qr { width: 16rem; image-rendering: pixelated; }
+  .join .url { font-weight: 700; font-size: 1.1rem; margin-top: 0.6rem; word-break: break-all; }
+  .join .bigcode { font-family: var(--head); font-size: 5rem; letter-spacing: 0.25em; color: var(--fas); line-height: 1.1; }
   .lob-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
   .lob-list .seat { max-width: none; flex-direction: row; align-items: center; gap: 0.6rem; animation: slidein 0.4s ease both; }
   .hint { color: var(--muted); font-size: 1rem; margin-top: 1rem; line-height: 1.5; }
-  .emblems { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; } .emblems img { width: 4.5rem; }
+  .trio { display: flex; gap: 0.8rem; justify-content: center; margin-bottom: 1rem; } .trio img { width: 6rem; border-radius: 0.4rem; animation: flip 0.8s ease both; }
+  .trio img:nth-child(2) { animation-delay: 0.15s; } .trio img:nth-child(3) { animation-delay: 0.3s; }
   .corner { position: fixed; right: 1rem; bottom: 0.35rem; display: flex; gap: 0.5rem; z-index: 9; }
-  .corner button { background: var(--ink-2); color: var(--muted); border: 1px solid #4a443d; border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-family: var(--head); letter-spacing: 0.06em; }
-  .credit { position: fixed; left: 1.4rem; bottom: 0.45rem; font-size: 0.68rem; color: #6f6659; }
+  .corner button { background: var(--ink-2); color: var(--muted); border: 1px solid #5a5248; border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 600; }
+  .credit { position: fixed; left: 1.4rem; bottom: 0.45rem; font-size: 0.65rem; color: #7d7466; }
+  .unlock { position: fixed; left: 50%; bottom: 2.2rem; transform: translateX(-50%); z-index: 9; font-size: 1.1rem !important; padding: 0.45rem 1.2rem !important; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="fx"></div>
-<div class="corner"><button id="narr">Narrator: off</button><button id="fs">Full screen</button></div>
-<div class="credit">Based on Secret Hitler by Max Temkin, Mike Boxleiter, Tommy Maranges and Mac Schubert · CC BY-NC-SA 4.0 · fan-made, not for sale</div>
+<div class="corner"><button id="snd">Sound: on</button><button id="narr">Voice announcements: off</button><button id="fs">Full screen</button></div>
+<div class="credit">Secret Hitler by Goat, Wolf &amp; Cabbage · art adapted from Secret Hitler Online by ShrimpCryptid · CC BY-NC-SA 4.0 · fan-made, not for sale</div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/common.js"></script>
 <script>
 const socket = io();
 const app = document.getElementById('app');
 const fx = document.getElementById('fx');
-let info = null, S = null, narrator = false, lastSpoken = null, lastSound = null;
-let prev = { lib: null, fas: null, tracker: null, shuffles: null, bannerAt: null };
-let customSounds = new Set();
+let info = null, S = null, voiceOn = false, soundOn = true, lastSpoken = null, lastSound = null;
+let prev = { lib: null, fas: null, shuffles: null, bannerAt: null };
+let audioUnlocked = false;
 const params = new URLSearchParams(location.search);
-fetch('/sounds/list').then((r) => r.json()).then((l) => { customSounds = new Set(l); }).catch(() => {});
 
 function connect() {
   const want = params.get('room') || localStorage.getItem('sh-tv-room');
@@ -166,84 +158,102 @@ function connect() {
   });
 }
 socket.on('connect', connect);
-socket.on('state', (s) => { S = s; render(); speak(); sound(); shuffleFx(); });
+socket.on('state', (s) => { S = s; render(); speak(); sound(); shuffleFx(); nightAudio(); });
 setInterval(() => { const t = document.getElementById('talktime'); if (t && S && S.game && S.game.announce) t.textContent = clock(Date.now() - S.game.announce.at); }, 1000);
 function clock(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
 document.getElementById('fs').onclick = () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+const sndBtn = document.getElementById('snd');
+sndBtn.onclick = () => { soundOn = !soundOn; sndBtn.textContent = 'Sound: ' + (soundOn ? 'on' : 'off'); if (!soundOn) stopNight(); };
 const narrBtn = document.getElementById('narr');
-narrBtn.onclick = () => { narrator = !narrator; narrBtn.textContent = 'Narrator: ' + (narrator ? 'on' : 'off'); if (narrator) say('Narrator on.'); };
+narrBtn.onclick = () => { voiceOn = !voiceOn; narrBtn.textContent = 'Voice announcements: ' + (voiceOn ? 'on' : 'off'); if (voiceOn) say('Voice announcements on.'); };
 
-// ---------- narrator ----------
+// Browsers only allow sound after someone clicks the page once.
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); } catch (e) {}
+  const a = new Audio('/narration/s4-b.mp3'); a.volume = 0; a.play().then(() => a.pause()).catch(() => {});
+  render(); nightAudio();
+}
+document.addEventListener('pointerdown', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+
+// ---------- night-phase narration (official app audio) ----------
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+function nightPlaylist(n) {
+  const s4 = pick(['s4-a', 's4-b']), s6 = pick(['s6-a', 's6-b', 's6-c', 's6-d', 's6-e']);
+  if (n <= 6) return ['s1-56', 's2-56', s4, s6];
+  return [pick(['s1-710-a', 's1-710-b', 's1-710-c']), n <= 8 ? 's2-78' : 's2-910', pick(['s3-710-a', 's3-710-b', 's3-710-c', 's3-710-d', 's3-710-e']), s4, pick(['s5-710-a', 's5-710-b']), s6];
+}
+let night = null; // {key, list, i, audio, blocked}
+function stopNight() { if (night && night.audio) night.audio.pause(); }
+function nightAudio() {
+  const g = S && S.game;
+  if (!g || g.phase !== 'night') { if (night) { stopNight(); night = null; } return; }
+  const key = g.announce.at;
+  if (night && night.key === key) { if (night.blocked && audioUnlocked) { night.blocked = false; playClip(); } return; }
+  night = { key, list: nightPlaylist(g.playerCount), i: 0, audio: null, blocked: false };
+  if (!soundOn) return finishNight();
+  playClip();
+}
+function playClip() {
+  if (!night) return;
+  if (night.i >= night.list.length) return finishNight();
+  const a = new Audio(`/narration/${night.list[night.i]}.mp3`);
+  night.audio = a;
+  a.onended = () => { night.i += 1; setTimeout(playClip, 600); };
+  a.ontimeupdate = () => { const b = document.getElementById('nbar'); if (b && a.duration) b.style.width = (((night.i + a.currentTime / a.duration) / night.list.length) * 100) + '%'; };
+  a.onerror = () => { night.i += 1; playClip(); };
+  a.play().then(() => render()).catch(() => { night.blocked = true; render(); });
+}
+function finishNight() { socket.emit('tv:nightDone'); }
+
+// ---------- spoken announcements (optional) ----------
 let voice = null;
 function pickVoice() {
   const vs = speechSynthesis.getVoices();
-  const prefs = [/Google UK English Male/i, /Daniel/i, /en-GB.*(Natural|Neural)/i, /(Natural|Neural).*en-GB/i, /Microsoft (Ryan|George|Guy).*Natural/i, /en-GB/i, /en-US/i];
+  const prefs = [/Google UK English Male/i, /Daniel/i, /en-GB.*(Natural|Neural)/i, /Microsoft (Ryan|George|Guy).*Natural/i, /en-GB/i, /en-US/i];
   for (const p of prefs) { const v = vs.find((x) => p.test(x.name + ' ' + x.lang)); if (v) return v; }
   return vs[0] || null;
 }
-if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { voice = pickVoice(); };
 function say(t) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t);
-  voice = voice || pickVoice(); if (voice) u.voice = voice;
-  u.rate = 0.92; u.pitch = 0.85;
-  speechSynthesis.speak(u);
-}
-function narration(g) {
-  const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
-  const a = g.announce;
-  switch (g.phase) {
-    case 'roles': return 'Welcome. Everyone, look at your phone, and hold the button to see your secret role. Fascists, take note of your team. Keep your role hidden. Tap ready when you are done.';
-    case 'nominate': return `${name(g.president)} is the Presidential Candidate. Discuss, then nominate a Chancellor.`;
-    case 'vote': return `${name(g.president)} has nominated ${name(g.nominee)} as Chancellor. Everyone, cast your vote. Ja, or Nein.`;
-    case 'voteResult': return g.lastVote && g.lastVote.passed ? `The vote passes, ${g.lastVote.ja} to ${g.lastVote.nein}. The government is elected.` : `The vote fails, ${g.lastVote.ja} to ${g.lastVote.nein}. The election tracker advances.`;
-    case 'president': return 'The legislative session begins. The President draws three policies. Silence at the table, please.';
-    case 'chancellor': return 'The Chancellor now chooses which policy to enact.';
-    case 'enacted': return g.lastEnacted && g.lastEnacted.byChaos ? 'The country is thrown into chaos. The top policy has been enacted.' : `A ${g.lastEnacted && g.lastEnacted.policy === 'L' ? 'Liberal' : 'Fascist'} policy has been enacted. ${a.text || ''}`;
-    case 'gameover': return `${g.winner === 'liberal' ? 'The Liberals' : 'The Fascists'} win. ${g.winReason}`;
-    default: return a.title + '. ' + (a.text || '');
-  }
+  const u = new SpeechSynthesisUtterance(t); voice = voice || pickVoice(); if (voice) u.voice = voice;
+  u.rate = 0.92; u.pitch = 0.85; speechSynthesis.speak(u);
 }
 function speak() {
   const g = S && S.game; const a = g && g.announce;
-  if (!narrator || !a || a.at === lastSpoken) return;
-  lastSpoken = a.at; say(narration(g));
+  if (!voiceOn || !a || a.at === lastSpoken || g.phase === 'night') return;
+  lastSpoken = a.at; say(a.title + '. ' + (a.text || ''));
 }
 
-// ---------- sounds: custom files in /sounds/custom/<event>.mp3 override built-in tones ----------
+// ---------- sound effects ----------
 let ctx;
 function tone(freqs, dur = 0.18) {
+  if (!soundOn) return;
   try {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     freqs.forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
-      const t = ctx.currentTime + i * dur; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 1.6); o.start(t); o.stop(t + dur * 1.8); });
+      const t = ctx.currentTime + i * dur; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 1.6); o.start(t); o.stop(t + dur * 1.8); });
   } catch (e) {}
-}
-const TONES = { 'vote-pass': [[392, 523, 659]], 'vote-fail': [[330, 262, 196]], 'liberal-policy': [[523, 659, 784], 0.25], 'fascist-policy': [[220, 185, 147], 0.25],
-  'chaos': [[160, 150, 140, 130], 0.2], 'shuffle': [[600, 700, 600, 700, 600], 0.06], 'execution': [[110, 82], 0.4], 'liberals-win': [[392, 494, 587, 784], 0.3], 'fascists-win': [[294, 247, 220, 147], 0.3], 'roles': [[262, 330, 392], 0.2] };
-function play(ev) {
-  const f = [...customSounds].find((x) => x.replace(/\.[^.]+$/, '') === ev);
-  if (f) { const au = new Audio('/sounds/custom/' + f); au.play().catch(() => {}); return; }
-  if (TONES[ev]) tone(...TONES[ev]);
 }
 function sound() {
   const g = S && S.game; if (!g) return;
   const key = g.phase + (g.announce && g.announce.at);
   if (key === lastSound) return; lastSound = key;
-  if (g.phase === 'roles') play('roles');
-  if (g.phase === 'voteResult') play(g.lastVote.passed ? 'vote-pass' : 'vote-fail');
-  if (g.phase === 'enacted') play(g.lastEnacted.byChaos ? 'chaos' : g.lastEnacted.policy === 'L' ? 'liberal-policy' : 'fascist-policy');
-  if (g.phase === 'gameover') play(g.winner === 'liberal' ? 'liberals-win' : 'fascists-win');
-  if (g.phase === 'executed') play('execution');
+  if (g.phase === 'voteResult') tone(g.lastVote.passed ? [392, 523, 659] : [330, 262, 196]);
+  if (g.phase === 'enacted') tone(g.lastEnacted.byChaos ? [160, 150, 140, 130] : g.lastEnacted.policy === 'L' ? [523, 659, 784] : [220, 185, 147], 0.25);
+  if (g.phase === 'gameover') tone(g.winner === 'liberal' ? [392, 494, 587, 784] : [294, 247, 220, 147], 0.3);
+  if (g.phase === 'executed') tone([110, 82], 0.4);
 }
 function shuffleFx() {
   const g = S && S.game; if (!g) { prev.shuffles = null; return; }
   if (prev.shuffles !== null && g.shuffles > prev.shuffles) {
-    play('shuffle');
-    fx.innerHTML = `<div class="shuffle"><div class="fan"><span></span><span></span><span></span><span></span></div><div><h3>Shuffling the deck</h3><p>Fewer than 3 policies were left, so the discard pile was shuffled back in. ${g.deck} policies in the deck now.</p></div></div>`;
-    clearTimeout(shuffleFx.t); shuffleFx.t = setTimeout(() => { fx.innerHTML = ''; }, 5000);
+    tone([600, 700, 600, 700, 600], 0.06);
+    fx.innerHTML = `<div class="shuffle"><div class="fan">${'<img src="/assets/board-policy.png" alt="">'.repeat(4)}</div><div><h3>Shuffling the deck</h3><p>Fewer than 3 policies were left, so the discard pile was shuffled back in. ${g.deck} policies in the draw pile now.</p></div></div>`;
+    clearTimeout(shuffleFx.t); shuffleFx.t = setTimeout(() => { fx.innerHTML = ''; }, 5500);
   }
   prev.shuffles = g.shuffles;
 }
@@ -251,8 +261,9 @@ function shuffleFx() {
 // ---------- rendering ----------
 function render() {
   if (!info) { app.innerHTML = '<div class="ov"><h1>Connecting…</h1><p>If the site was asleep, this can take up to a minute.</p></div>'; return; }
-  if (!S || !S.game) { prev.lib = prev.fas = prev.tracker = null; return renderLobby(); }
-  renderGame(S.game);
+  if (!S || !S.game) { prev.lib = prev.fas = null; renderLobby(); }
+  else renderGame(S.game);
+  if (!audioUnlocked) app.insertAdjacentHTML('beforeend', '<button class="btn unlock" onclick="unlockAudio()">Click once to turn on sound and narration</button>');
 }
 
 function roleCounts(n) {
@@ -261,42 +272,46 @@ function roleCounts(n) {
 }
 
 function renderLobby() {
-  const L = S ? S.lobby : { players: [] };
+  const L = S ? S.lobby : { players: [], options: {} };
   const n = L.players.length;
   app.innerHTML = `
-  <div class="top"><div class="brand head"><img src="/role-art/hitler" alt="">Secret Hitler</div><div style="flex:1"></div></div>
   <div class="lobby">
     <div class="join">
-      <div class="emblems"><img src="/role-art/liberal" alt=""><img src="/role-art/fascist" alt=""><img src="/role-art/hitler" alt=""></div>
-      <h2 style="font-size:1.6rem">Scan to join</h2>
+      <div class="trio"><img src="/assets/role-liberal-2.png" alt=""><img src="/assets/role-hitler.png" alt=""><img src="/assets/role-fascist-1.png" alt=""></div>
+      <h2 style="font-size:2rem">Scan to join</h2>
       <img class="qr" src="${info.qr}" alt="QR code to join">
       <div class="url">${esc(info.base)}/play</div>
-      <div class="hint" style="color:#6b5f4d;margin-top:0.4rem">Room code</div>
       <div class="bigcode">${esc(info.code)}</div>
     </div>
     <div>
-      <h2 style="font-size:2rem;margin-bottom:0.8rem">Players · ${n}/10</h2>
+      <h1 style="font-size:3.4rem;color:#fff;margin-bottom:0.6rem">Secret Hitler</h1>
+      <h2 style="font-size:1.8rem;color:var(--paper-2);margin-bottom:0.8rem">Players · ${n}/10</h2>
       <div class="lob-list">
         ${L.players.map((p, i) => `<div class="seat ${p.connected ? '' : 'off'}"><span class="no">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}</div>`).join('') || '<div class="hint">Waiting for players…</div>'}
       </div>
       <div class="hint">
         ${n >= 5 ? `<b style="color:var(--paper)">${roleCounts(n)}</b><br>` : `Need ${5 - n} more player${5 - n === 1 ? '' : 's'} (5–10). `}
-        Join in seating order going clockwise around the room — the presidency passes in this order. The host can reorder seats, add practice bots, and start the game from their phone.
+        Sit around the table and join in seating order, going clockwise — the presidency passes in this order. Your phone is your secret role card, your ballot and your policy hand.<br>
+        <b style="color:var(--paper)">Night phase:</b> ${L.options && L.options.classic ? 'Classic — phones don\'t show teams; Fascists find each other with eyes closed, like the board game.' : 'Phones show each Fascist their team, and the narrator still runs the eyes-closed ritual.'}
       </div>
     </div>
   </div>`;
 }
 
-const POWER_NAMES = { investigate: 'Investigate loyalty', special: 'Special election', peek: 'Policy peek', execute: 'Execution' };
-function slotHtml(kind, i, g) {
-  const count = kind === 'lib' ? g.liberal : g.fascist;
-  const isNew = i === count - 1 && (kind === 'lib' ? prev.lib : prev.fas) !== null && count > (kind === 'lib' ? prev.lib : prev.fas);
-  if (i < count) return `<div class="slot filled ${isNew ? 'new' : ''}">${policyCard(kind === 'lib' ? 'L' : 'F')}</div>`;
-  const next = i === count ? 'next' : '';
-  if (kind === 'lib') return `<div class="slot ${i === 4 ? 'win' : ''} ${next}">${i === 4 ? `<img src="/role-art/liberal" style="width:2.8rem" alt="">Liberals win` : ''}</div>`;
-  if (i === 5) return `<div class="slot win ${next}"><img src="/role-art/fascist" style="width:2.8rem" alt="">Fascists win</div>`;
-  const p = g.board[i];
-  return `<div class="slot ${next}">${p ? ICON[p] + POWER_NAMES[p] : ''}${i === 4 ? '<div style="margin-top:0.2rem">+ veto unlocked</div>' : ''}</div>`;
+const LIB_X = (i) => 18.2 + i * 13.54, FAS_X = (i) => 11 + i * 13.6;
+function boardsHtml(g) {
+  const n = g.playerCount;
+  const fasBoard = n <= 6 ? '5-6' : n <= 8 ? '7-8' : '9-10';
+  const newLib = prev.lib !== null && g.liberal > prev.lib, newFas = prev.fas !== null && g.fascist > prev.fas;
+  const tiles = (count, xf, img, isNew) => Array.from({ length: count }, (_, i) =>
+    `<img class="tile ${isNew && i === count - 1 ? 'new' : ''}" src="/assets/${img}" style="left:${xf(i)}%" alt="">`).join('');
+  const nextLib = g.liberal < 5 ? `<div class="slotmark" style="left:${LIB_X(g.liberal)}%"></div>` : '';
+  const nextFas = g.fascist < 6 ? `<div class="slotmark" style="left:${FAS_X(g.fascist)}%"></div>` : '';
+  return `<div class="boards">
+    <div class="board"><img class="bg" src="/assets/board-liberal.png" alt="Liberal board: ${g.liberal} of 5">${nextLib}${tiles(g.liberal, LIB_X, 'board-policy-liberal.png', newLib)}
+      <img class="tracker-token ${g.tracker === 2 ? 'hot' : ''}" src="/assets/board-tracker.png" style="left:calc(34.2% + ${g.tracker} * 9.16%)" alt="Election tracker ${g.tracker} of 3"></div>
+    <div class="board"><img class="bg" src="/assets/board-fascist-${fasBoard}.png" alt="Fascist board: ${g.fascist} of 6">${nextFas}${tiles(g.fascist, FAS_X, 'board-policy-fascist.png', newFas)}</div>
+  </div>`;
 }
 
 function talkLine(g) {
@@ -306,6 +321,7 @@ function talkLine(g) {
     return `<div class="talk"><b>Table talk</b> ${claim} <span id="talktime" style="margin-left:auto">${clock(Date.now() - g.announce.at)}</span></div>`;
   }
   if (g.phase === 'vote') return `<div class="talk"><b>Table talk</b> Argue for or against this government before the last vote is in.</div>`;
+  if (g.phase === 'president' || g.phase === 'chancellor') return `<div class="talk"><b>Silence</b> No talking while the government passes policies.</div>`;
   return '';
 }
 
@@ -313,44 +329,34 @@ function renderGame(g) {
   const L = S.lobby;
   const a = g.announce || { title: '', text: '' };
   const conn = Object.fromEntries(L.players.map((p) => [p.id, p.connected]));
-  const n = g.players.length;
   const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
-  const bannerAnim = prev.bannerAt !== a.at ? 'anim' : '';
   const chan = g.chancellor ? `<div class="g chan"><small>${ICON.gavel} Chancellor</small><b>${esc(name(g.chancellor))}</b></div>`
     : g.nominee ? `<div class="g chan nom"><small>${ICON.gavel} Nominee</small><b>${esc(name(g.nominee))}</b></div>`
     : `<div class="g chan empty"><small>${ICON.gavel} Chancellor</small><b>—</b></div>`;
+  const shownVotes = g.phase !== 'vote' && g.lastVote ? g.lastVote.votes : (g.recentVotes || null);
   app.innerHTML = `
   <div class="top">
-    <div class="brand head"><img src="/role-art/hitler" alt=""></div>
-    <div class="banner ${a.tone || ''} ${bannerAnim}"><h2>${esc(a.title)}</h2>${a.text ? `<p>${esc(a.text)}</p>` : ''}${talkLine(g)}</div>
+    <div class="banner ${a.tone || ''} ${prev.bannerAt !== a.at ? 'anim' : ''}"><h2>${esc(a.title)}</h2>${a.text ? `<p>${esc(a.text)}</p>` : ''}${talkLine(g)}</div>
     <div class="gov"><div class="g pres"><small>${ICON.crown} President</small><b>${esc(name(g.president))}</b></div>${chan}</div>
     <div class="code">Room<b>${esc(L.code)}</b></div>
   </div>
   <div class="main">
-    <div class="boards">
-      <div class="track lib"><h3><img src="/role-art/liberal" alt="">Liberal policies · ${g.liberal}/5</h3>
-        <div class="slots">${[0, 1, 2, 3, 4].map((i) => slotHtml('lib', i, g)).join('')}</div>
-      </div>
-      <div class="track fas"><h3><img src="/role-art/fascist" alt="">Fascist policies · ${g.fascist}/6<span class="meta">${n <= 6 ? '5–6' : n <= 8 ? '7–8' : '9–10'} player board</span></h3>
-        <div class="slots">${[0, 1, 2, 3, 4, 5].map((i) => slotHtml('fas', i, g)).join('')}</div>
-        <div class="hz"><span class="${g.fascist >= 3 ? 'on' : ''}">From 3 Fascist policies: if Hitler is elected Chancellor, Fascists win</span><span class="${g.vetoUnlocked ? 'on' : ''}">${ICON.veto} Veto ${g.vetoUnlocked ? 'unlocked' : 'unlocks at 5'}</span></div>
-      </div>
-    </div>
     <div class="side">
-      <div class="box tracker"><h4>Election tracker</h4>
-        <div class="dots">${[1, 2, 3].map((i) => `<div class="tdot ${g.tracker >= i ? 'on' : ''} ${i === 3 ? 'chaos' : ''} ${prev.tracker !== null && g.tracker === i && prev.tracker < i ? 'pop' : ''}"><i>${i}</i>${i === 3 ? 'Chaos' : i === 1 ? '1st fail' : '2nd fail'}</div>`).join('')}</div>
-        ${g.tracker === 2 ? '<div class="warn">One more failed government = chaos! The top policy gets enacted.</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted, its power is ignored, and term limits reset.</div>'}
-      </div>
-      <div class="box"><h4>Policy deck</h4><div class="piles">
-        <div class="pile"><div class="stack ${g.deck ? '' : 'empty'}">${[0, 1, 2].map((k) => `<span style="transform:translate(${k * 0.15}rem,${-k * 0.15}rem)"></span>`).join('')}<b>${g.deck}</b></div>Draw</div>
-        <div class="pile"><div class="stack ${g.discard ? '' : 'empty'}">${[0, 1, 2].map((k) => `<span style="transform:rotate(${(k - 1) * 6}deg)"></span>`).join('')}<b>${g.discard}</b></div>Discard</div>
-      </div><div class="note" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;text-align:center">${g.deck < 6 ? 'Reshuffles when fewer than 3 are left' : '6 Liberal + 11 Fascist in total'}</div></div>
-      <div class="box log"><h4>History</h4>${g.log.slice().reverse().slice(0, 5).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+      <div class="box"><div class="pile"><img src="/assets/board-draw.png" alt="Draw pile"><b>${g.deck}</b></div></div>
+      <div class="box"><div class="pile"><img src="/assets/board-discard.png" alt="Discard pile"><b style="color:#fff;text-shadow:none">${g.discard}</b></div></div>
+      <div class="box tcall"><h4>Election tracker</h4><div class="n">${g.tracker} / 3</div>
+        <div class="dots">${[1, 2, 3].map((i) => `<i class="${g.tracker >= i ? 'on' : ''} ${i === 3 ? 'chaos' : ''}"></i>`).join('')}</div>
+        ${g.tracker === 2 ? '<div class="warn">One more fail = chaos!</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted.</div>'}</div>
+    </div>
+    ${boardsHtml(g)}
+    <div class="side">
+      <div class="box log"><h4>History</h4>${g.log.slice().reverse().slice(0, 7).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
     </div>
   </div>
   <div class="seats">
     ${g.players.map((p, i) => `<div class="seat ${p.alive ? '' : 'dead'} ${p.isPresident ? 'pres' : ''} ${p.isChancellor ? 'chan' : ''} ${p.isNominee && !p.isChancellor ? 'nom' : ''} ${conn[p.id] === false ? 'off' : ''}">
       ${p.voted || p.ready ? `<span class="voted">${ICON.check}</span>` : ''}
+      ${g.phase !== 'vote' && g.recentVotes && p.id in g.recentVotes ? `<img class="vote" src="/assets/player-icon-${g.recentVotes[p.id] ? 'ja' : 'nein'}.png" alt="${g.recentVotes[p.id] ? 'Ja' : 'Nein'}">` : ''}
       <span class="no">Seat ${i + 1}</span><span class="nm">${esc(p.name)}</span>
       <div class="tags">
         ${p.isPresident ? `<span class="tag p">${ICON.crown} President</span>` : ''}
@@ -362,22 +368,29 @@ function renderGame(g) {
       </div></div>`).join('')}
   </div>
   ${overlay(g)}`;
-  prev.lib = g.liberal; prev.fas = g.fascist; prev.tracker = g.tracker; prev.bannerAt = a.at;
+  prev.lib = g.liberal; prev.fas = g.fascist; prev.bannerAt = a.at;
 }
 
 function overlay(g) {
   if (g.phase === 'roles') {
     const ready = g.players.filter((p) => p.ready).length;
-    return `<div class="ov"><div class="emblems"><img src="/role-art/liberal" alt=""><img src="/role-art/fascist" alt=""><img src="/role-art/hitler" alt=""></div>
-      <h1>Look at your phone</h1><p>Hold the button to see your secret role. Fascists see who Hitler is. ${g.playerCount <= 6 ? 'With 5–6 players, Hitler also sees the Fascist.' : 'With 7–10 players, Hitler does NOT know who the Fascists are.'} Tap "I'm ready" when you're done.</p>
-      <p class="head" style="font-size:1.8rem;color:var(--paper)">${ready} / ${g.players.length} ready</p></div>`;
+    return `<div class="ov"><img class="envelope" src="/assets/role-envelope-front.png" alt="">
+      <h1>Open your envelope</h1><p>Your phone is your secret role card. Hold the envelope on your phone to see your role and party, without letting anyone see. ${g.playerCount <= 6 ? 'With 5–6 players, Hitler knows who the Fascist is.' : 'With 7–10 players, Hitler does NOT know who the Fascists are.'} Tap "I've seen my role" when you're done.</p>
+      <p style="font-family:var(--head);font-size:2.2rem;color:#fff">${ready} / ${g.players.length} ready</p></div>`;
+  }
+  if (g.phase === 'night') {
+    const blocked = night && night.blocked;
+    return `<div class="ov night"><div class="moon"></div><h1>Night phase</h1>
+      <p>${soundOn ? 'Listen to the narrator. Put your phones down, close your eyes when you are told, and keep quiet.' : 'Sound is off. Run the eyes-closed ritual yourselves, then the host can continue.'}</p>
+      ${blocked ? '<button class="btn" onclick="unlockAudio();nightAudio()">Click to start the narration</button>' : `<div class="bar"><i id="nbar"></i></div>`}
+      <button class="btn ghost" onclick="stopNight();finishNight()">Skip narration</button></div>`;
   }
   if (g.phase === 'voteResult' && g.lastVote) {
     const v = g.lastVote;
     const voters = g.players.filter((p) => p.id in v.votes);
-    const w = voters.length > 7 ? 7 : 8.5;
-    return `<div class="ov"><h1 style="color:${v.passed ? '#a9d18e' : 'var(--fas-light)'}">${v.passed ? 'Ja! Government elected' : 'Nein! Government rejected'}</h1>
-      <div class="ballots">${voters.map((p, i) => `<div class="ballot" style="width:${w}rem"><div class="card ${v.votes[p.id] ? 'ja' : 'nein'}" style="animation-delay:${0.3 + i * 0.25}s">${v.votes[p.id] ? 'Ja!' : 'Nein'}</div><div>${esc(p.name)}</div></div>`).join('')}</div>
+    const w = voters.length > 7 ? 7.6 : voters.length > 5 ? 9 : 11;
+    return `<div class="ov"><h1 style="color:${v.passed ? '#bfe3a5' : 'var(--fas-light)'}">${v.passed ? 'Government elected' : 'Government rejected'}</h1>
+      <div class="ballots">${voters.map((p, i) => `<div class="ballot" style="width:${w}rem"><img src="/assets/vote-${v.votes[p.id] ? 'yes' : 'no'}.png" style="animation-delay:${0.3 + i * 0.25}s" alt="${v.votes[p.id] ? 'Ja' : 'Nein'}"><div>${esc(p.name)}</div></div>`).join('')}</div>
       <div class="tally" style="animation-delay:${0.6 + voters.length * 0.25}s">Ja ${v.ja} · Nein ${v.nein}</div></div>`;
   }
   if (g.phase === 'enacted' && g.lastEnacted) {
@@ -386,19 +399,20 @@ function overlay(g) {
       <p>${esc(g.announce.text || '')}</p></div>`;
   }
   if (g.phase === 'executed') {
-    return `<div class="ov"><div style="font-size:8rem;color:var(--fas);animation:popdot .8s ease both">${ICON.skull}</div><h1>${esc(g.announce.title)}</h1><p>${esc(g.announce.text)}</p></div>`;
+    return `<div class="ov"><img src="/assets/player-icon-hitler.png" style="width:9rem;animation:popdot .8s ease both" alt=""><h1>${esc(g.announce.title)}</h1><p>${esc(g.announce.text)}</p></div>`;
   }
   if (g.phase === 'gameover') {
     const lib = g.winner === 'liberal';
     const n = g.players.length;
     const cols = n <= 5 ? n : Math.ceil(n / 2);
-    const cw = Math.min(14, (84 - (cols - 1)) / cols);
+    const rows = n <= 5 ? 1 : 2;
+    const cw = Math.min(rows === 1 ? 13 : 8.6, (82 - (cols - 1)) / cols);
     const order = ['hitler', 'fascist', 'liberal'];
     const ps = g.players.slice().sort((x, y) => order.indexOf(x.role) - order.indexOf(y.role));
-    return `<div class="ov" style="background:${lib ? 'rgba(23,59,77,0.97)' : 'rgba(90,26,14,0.97)'};gap:1rem">
-      <div style="display:flex;align-items:center;gap:1.2rem"><img src="/role-art/${lib ? 'liberal' : 'fascist'}" style="width:5rem;animation:popdot .8s ease both" alt=""><h1>${lib ? 'Liberals win' : 'Fascists win'}</h1></div>
+    return `<div class="ov" style="background:${lib ? 'rgba(20,45,52,0.97)' : 'rgba(70,24,10,0.97)'};gap:0.9rem">
+      <img class="vict" style="width:${rows === 1 ? 34 : 26}rem" src="/assets/victory-${lib ? 'liberal' : 'fascist'}-header.png" alt="${lib ? 'Liberal' : 'Fascist'} victory">
       <p>${esc(g.winReason)}</p>
-      <div class="roles" style="grid-template-columns:repeat(${cols}, ${cw}rem)">${ps.map((p, i) => `<div class="rcard ${p.role} ${p.alive ? '' : 'dead'}" style="animation-delay:${0.4 + i * 0.18}s"><img src="${ROLE_ART[p.role]}" alt=""><b>${esc(p.name)}</b><span>${ROLE_NAME[p.role]}</span>${p.alive ? '' : '<small>executed</small>'}</div>`).join('')}</div>
+      <div class="roles" style="grid-template-columns:repeat(${cols}, ${cw}rem)">${ps.map((p, i) => `<div class="rcard ${p.alive ? '' : 'dead'}" style="animation-delay:${0.5 + i * 0.18}s"><img src="${roleCardSrc(p.role, p.art)}" alt="${ROLE_NAME[p.role]}"><b>${esc(p.name)}</b>${p.alive ? '' : '<small>executed</small>'}</div>`).join('')}</div>
       <p style="font-size:1rem">The host can start a new game from their phone.</p></div>`;
   }
   return '';

@@ -43,6 +43,10 @@ class Game {
     const roles = ['hitler', ...Array(t.fascists).fill('fascist'), ...Array(t.liberals).fill('liberal')];
     shuffle(roles, this.rng);
     this.players.forEach((p, i) => { p.role = roles[i]; p.party = roles[i] === 'liberal' ? 'liberal' : 'fascist'; });
+    this.classic = !!opts.classic; // classic night phase: teams are learned with eyes closed, not on phones
+    // which role-card illustration each player gets (liberal 1-6, fascist 1-3)
+    const libArt = shuffle([1, 2, 3, 4, 5, 6], this.rng), fasArt = shuffle([1, 2, 3], this.rng);
+    this.players.forEach((p) => { p.art = p.role === 'liberal' ? libArt.pop() : p.role === 'fascist' ? fasArt.pop() : 0; });
 
     this.board = boardFor(n);
     this.deck = shuffle([...Array(6).fill('L'), ...Array(11).fill('F')], this.rng);
@@ -88,9 +92,16 @@ class Game {
     if (this.phase !== 'roles') return;
     this.ready.add(id);
     if (this.ready.size >= this.n) {
-      this.phase = 'nominate';
-      this.say('Election', `${this.name(this.president)} is the Presidential Candidate. Pick a Chancellor.`);
+      this.phase = 'night';
+      this.say('Night phase', 'Listen to the narrator. Close your eyes when you are told to.');
     }
+  }
+
+  endNight() {
+    if (this.phase !== 'night') return 'The night phase is already over.';
+    this.phase = 'nominate';
+    this.addLog('The game begins.');
+    this.say('Election', `${this.name(this.president)} is the Presidential Candidate. Pick a Chancellor.`);
   }
 
   // ---------- election ----------
@@ -357,6 +368,7 @@ class Game {
         voted: this.phase === 'vote' ? x.id in this.votes : undefined,
         ready: this.phase === 'roles' ? this.ready.has(x.id) : undefined,
         role: over ? x.role : undefined,
+        art: over ? x.art : undefined,
       })),
       board: this.board,
       liberal: this.liberal,
@@ -374,8 +386,10 @@ class Game {
       announce: this.announce,
       log: this.log.slice(-8),
       shuffles: this.shuffles,
+      recentVotes: this.phase === 'vote' || !this.lastVote ? null : this.lastVote.votes,
       lastGov: this.lastGov,
       playerCount: this.n,
+      classic: this.classic,
       president: this.president,
       chancellor: this.chancellor,
       nominee: this.nominee,
@@ -387,13 +401,14 @@ class Game {
     if (!me) return null;
     const n = this.n;
     let teammates = [];
-    if (me.role === 'fascist' || (me.role === 'hitler' && n <= 6)) {
+    if (!this.classic && (me.role === 'fascist' || (me.role === 'hitler' && n <= 6))) {
       teammates = this.players.filter((x) => x.id !== id && x.party === 'fascist').map((x) => ({ name: x.name, role: x.role }));
     }
-    const v = { id, role: me.role, party: me.party, alive: me.alive, teammates, hitlerKnowsTeam: n <= 6, action: null };
+    const v = { id, role: me.role, party: me.party, art: me.art, alive: me.alive, teammates, hitlerKnowsTeam: n <= 6, classic: this.classic, action: null };
     if (!me.alive && this.phase !== 'gameover') { v.action = { type: 'dead' }; return v; }
     const P = this.phase;
     if (P === 'roles') v.action = { type: 'ready', done: this.ready.has(id) };
+    else if (P === 'night') v.action = { type: 'night' };
     else if (P === 'nominate' && id === this.president) v.action = { type: 'nominate', options: this.eligibleChancellors().map((x) => ({ id: x, name: this.name(x) })) };
     else if (P === 'vote') v.action = { type: 'vote', president: this.name(this.president), nominee: this.name(this.nominee), mine: id in this.votes ? this.votes[id] : null };
     else if (P === 'president' && id === this.president) v.action = { type: 'discard', cards: [...this.hand] };

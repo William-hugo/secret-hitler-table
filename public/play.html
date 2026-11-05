@@ -29,21 +29,21 @@
   .opt .small { margin-left: auto; display: flex; gap: 6px; }
   .opt .small button { border: 1px solid #b9ab8f; background: transparent; border-radius: 6px; padding: 4px 9px; color: inherit; }
   .cards { display: grid; gap: 10px; margin-top: 12px; }
-  .cards .policy { font-size: 1rem; border-width: 4px; border-color: transparent; transition: transform 0.15s; }
-  .cards .policy.sel { border-color: var(--gold); transform: translateY(-6px); }
+  .cards .policy { transition: transform 0.15s; border-radius: 10px; }
+  .cards .policy.sel { transform: translateY(-10px); box-shadow: 0 0 0 4px var(--gold); }
   .cards .policy.gone { opacity: 0.25; }
   .ballots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-  .ballot { aspect-ratio: 5/6; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--head); font-size: 2.2rem; border: 4px solid transparent; text-transform: uppercase; }
-  .ballot.ja { background: #fffaf0; color: var(--ink); border-color: var(--paper-2); }
-  .ballot.nein { background: var(--ink-2); color: var(--paper); }
-  .ballot.sel { border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold); }
-  .ballot small { font-size: 0.75rem; font-family: var(--body); text-transform: none; opacity: 0.7; }
+  .ballot { border: none; background: none; padding: 0; border-radius: 12px; transition: transform .15s; }
+  .ballot img { width: 100%; display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+  .ballot.sel { transform: translateY(-8px); box-shadow: 0 0 0 4px var(--gold); }
+  .ballots.voted .ballot:not(.sel) { opacity: .45; }
   .hold { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px; border-radius: 14px; background: var(--ink-2); color: var(--paper); border: 2px dashed #5a5248; font-family: var(--head); letter-spacing: 0.06em; text-transform: uppercase; touch-action: none; }
   .hold.sm { flex-direction: row; padding: 8px 12px; font-size: 0.8rem; }
   .hold svg { width: 28px; height: 28px; } .hold.sm svg { width: 18px; height: 18px; }
   .reveal { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; }
-  .reveal.liberal { background: var(--lib); } .reveal.fascist { background: var(--fas); } .reveal.hitler { background: #120f0d; border: 6px solid var(--fas); }
-  .reveal img { width: 36vw; max-width: 170px; }
+  .reveal.liberal { background: #2d6470; } .reveal.fascist { background: #8a2f10; } .reveal.hitler { background: #120f0d; border: 6px solid var(--fas); }
+  .reveal h1 { font-size: 2.6rem !important; }
+  
   .reveal h1 { font-size: 2.6rem; }
   .reveal .team { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px 16px; width: 100%; max-width: 340px; }
   .reveal .team .lbl { font-family: var(--head); text-transform: uppercase; letter-spacing: .1em; font-size: .8rem; opacity: .8; margin-top: 6px; }
@@ -56,8 +56,13 @@
   #act > .panel { animation: pop .25s ease both; }
   .status { display: flex; gap: 8px; justify-content: space-between; font-family: var(--head); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
   .status b { color: var(--paper); }
-  .party { width: 60%; margin: 12px auto; aspect-ratio: 5/7; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-family: var(--head); text-transform: uppercase; letter-spacing: 0.08em; color: var(--paper); font-size: 1.2rem; }
-  .party img { width: 60%; }
+  .party { width: 62%; margin: 12px auto; display: block; border-radius: 12px; animation: rflip .5s ease both; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
+  .envelope { width: 62%; display: block; margin: 6px auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.4)); }
+  .hold.env { background: none; border: none; padding: 0; }
+  .roleimgs { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 360px; }
+  .roleimgs img { width: 48%; border-radius: 10px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
+  .toggle { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: .9rem; line-height: 1.4; }
+  .toggle input { width: 22px; height: 22px; margin: 2px 0 0; flex: none; }
   .center { text-align: center; }
   .big-ico { font-size: 3rem; text-align: center; color: var(--fas); }
 </style>
@@ -106,7 +111,7 @@ function render() {
 
 function renderJoin() {
   app.innerHTML = `
-    <div class="center" style="margin-top:20px"><img src="/role-art/hitler" style="width:84px" alt=""><h1 style="font-size:1.8rem;margin-top:8px">Secret Hitler</h1></div>
+    <div class="center" style="margin-top:20px"><img src="/assets/role-envelope-front.png" style="width:110px" alt=""><h1 style="font-size:2.4rem;margin-top:8px">Secret Hitler</h1></div>
     <div class="panel">
       <label class="head" style="font-size:0.85rem">Room code</label>
       <input id="code" class="code" maxlength="4" value="${esc(code)}" autocomplete="off" placeholder="ABCD">
@@ -130,11 +135,13 @@ function renderLobby() {
       <div class="list">${L.players.map((p, i) => `<div class="opt" style="cursor:default"><span style="color:var(--muted);width:18px">${i + 1}</span>${esc(p.name)}
         ${me.isHost ? `<span class="small"><button data-mv="${p.id}" data-d="-1" aria-label="Move up">↑</button><button data-mv="${p.id}" data-d="1" aria-label="Move down">↓</button>${p.id !== me.id ? `<button data-kick="${p.id}" aria-label="Remove">✕</button>` : ''}</span>` : ''}</div>`).join('')}</div>
       ${me.isHost && n < 10 ? `<button class="btn alt" id="addBot">+ Add practice bot</button><p class="muted" style="font-size:0.85rem;margin-top:4px">Bots play randomly so you can practice with fewer people.</p>` : ''}
+      ${me.isHost ? `<label class="toggle"><input type="checkbox" id="classic" ${L.options && L.options.classic ? 'checked' : ''}><span><b>Classic night phase</b><br><span class="muted">Phones don't show the Fascist team. Fascists find each other with eyes closed while the narrator talks, like the board game.</span></span></label>` : (L.options && L.options.classic ? '<p class="muted">Classic night phase is on.</p>' : '')}
       ${me.isHost ? `<button class="btn red" id="start" ${n < 5 ? 'disabled' : ''}>Start game</button>` : ''}
       <button class="btn alt" id="leave">Leave room</button>
     </div>`;
   app.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => socket.emit('host:move', b.dataset.mv, Number(b.dataset.d)));
   app.querySelectorAll('[data-kick]').forEach((b) => b.onclick = () => socket.emit('host:kick', b.dataset.kick));
+  const cl = document.getElementById('classic'); if (cl) cl.onchange = () => socket.emit('host:option', 'classic', cl.checked);
   const ab = document.getElementById('addBot'); if (ab) ab.onclick = () => socket.emit('host:addBot');
   const st = document.getElementById('start'); if (st) st.onclick = () => socket.emit('host:start');
   document.getElementById('leave').onclick = () => { socket.emit('leave'); localStorage.removeItem('sh-token-' + code); joined = false; render(); };
@@ -148,7 +155,9 @@ function showRole(on) {
   const n = (S.game && S.game.playerCount) || 0;
   const big = n >= 7;
   let team = '';
-  if (m.role === 'fascist') {
+  if (m.classic && m.role !== 'liberal') {
+    team = `<div class="team"><div class="rule">Classic night phase: you'll find your team during the narrator's eyes-closed ritual on the TV. ${m.role === 'hitler' ? (n <= 6 ? 'With 5–6 players, Hitler opens his eyes too.' : 'With 7–10 players, Hitler only gives a thumbs-up and keeps his eyes closed.') : 'Look for Hitler\'s thumbs-up.'}</div></div>`;
+  } else if (m.role === 'fascist') {
     const h = m.teammates.find((t) => t.role === 'hitler');
     const others = m.teammates.filter((t) => t.role !== 'hitler');
     team = `<div class="team"><div class="lbl">Hitler is</div><div class="who hit">${esc(h ? h.name : '?')}</div>
@@ -156,7 +165,7 @@ function showRole(on) {
       <div class="who">${others.length ? others.map((t) => esc(t.name)).join(', ') : 'None — it\'s just you and Hitler'}</div>
       <div class="rule">${big ? 'In a 7–10 player game, Hitler does NOT know who you are. Help him quietly.' : 'In a 5–6 player game, Hitler also knows you are a Fascist.'}</div></div>`;
   }
-  if (m.role === 'hitler') {
+  else if (m.role === 'hitler') {
     team = m.hitlerKnowsTeam
       ? `<div class="team"><div class="lbl">Your Fascist${m.teammates.length > 1 ? 's' : ''}</div><div class="who">${m.teammates.map((t) => esc(t.name)).join(', ')}</div><div class="rule">In a 5–6 player game, Hitler knows the Fascists.</div></div>`
       : `<div class="team"><div class="lbl">Your Fascists</div><div class="who">Unknown</div><div class="rule">In a 7–10 player game, Hitler doesn't know who the Fascists are, but they know you. Act like a Liberal and get elected Chancellor.</div></div>`;
@@ -164,8 +173,8 @@ function showRole(on) {
   if (m.role === 'liberal') team = `<div class="team"><div class="rule">You don't know anyone else's role. Watch the votes and the policies to find the Fascists and Hitler.</div></div>`;
   const goal = m.role === 'liberal' ? 'Win: enact 5 Liberal policies, or execute Hitler.' : 'Win: enact 6 Fascist policies, or get Hitler elected Chancellor after 3 Fascist policies.';
   r.className = 'reveal ' + m.role;
-  r.innerHTML = `<div class="flipcard"><div class="head" style="opacity:.8">Secret role</div><img src="${ROLE_ART[m.role]}" alt=""><h1>${ROLE_NAME[m.role]}</h1>
-    <div class="head" style="opacity:.8;font-size:.9rem">Party: ${m.party}</div>${team}<p style="max-width:320px;opacity:.9;margin:6px auto">${goal}</p><p style="opacity:.6;font-size:.85rem">Let go to hide</p></div>`;
+  r.innerHTML = `<div class="flipcard"><div class="roleimgs"><img src="${roleCardSrc(m.role, m.art)}" alt="Secret role: ${ROLE_NAME[m.role]}"><img src="${partyCardSrc(m.party)}" alt="Party: ${m.party}"></div>
+    <h1>${ROLE_NAME[m.role]}</h1>${team}<p style="max-width:320px;opacity:.9;margin:4px auto;font-size:.9rem">${goal}</p><p style="opacity:.6;font-size:.8rem;margin:0">Let go to hide</p></div>`;
   r.style.display = 'flex';
 }
 function bindHold(el) {
@@ -219,15 +228,18 @@ function cardsHtml(cards, cols, cls = '') {
 
 function actionHtml(a, g) {
   switch (a.type) {
-    case 'ready': return `<div class="panel center"><h2>Your secret role</h2><p class="muted">Cover your screen, then hold the button below. Don't show anyone.</p>
-      <div class="hold" id="holdBig" style="margin:14px 0">${ICON.lock}Hold to see your role</div>
-      ${a.done ? '<p class="muted">Waiting for everyone else…</p>' : '<button class="btn" id="ready">I\'m ready</button>'}</div>`;
+    case 'ready': return `<div class="panel center"><h2>Your secret role</h2><p class="muted">Tilt your phone away from others, then press and hold the envelope.</p>
+      <div class="hold env" id="holdBig"><img class="envelope" src="/assets/role-envelope-front.png" alt="Hold to open your envelope"></div>
+      <p class="head" style="font-size:1.2rem;margin:4px 0 8px">Press and hold to open</p>
+      ${a.done ? '<p class="muted">Waiting for everyone else…</p>' : '<button class="btn" id="ready">I\'ve seen my role</button>'}</div>`;
+    case 'night': return `<div class="panel center"><div style="font-size:3rem">☾</div><h2>Night phase</h2><p class="muted">Put your phone face down and listen to the narrator on the TV. Close your eyes when told. Stay silent.</p>
+      ${S.me.isHost ? '<button class="btn alt" id="skipNight">Skip narration (host)</button>' : ''}</div>`;
     case 'nominate': return `<div class="panel"><h2>You're the Presidential Candidate</h2><p class="muted">Talk it over with the table first, then nominate a Chancellor. Term-limited players aren't listed.</p>
       <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>Nominate</button></div>`;
     case 'vote': return `<div class="panel"><h2>Vote</h2><p><b>${esc(a.president)}</b> as President, <b>${esc(a.nominee)}</b> as Chancellor?</p>
       ${g.fascist >= 3 ? '<p style="color:var(--fas);font-size:0.95rem">Careful: 3+ Fascist policies are enacted. If the Chancellor is Hitler, Fascists win.</p>' : ''}
-      <div class="ballots"><button class="ballot ja ${a.mine === true ? 'sel' : ''}" data-vote="1">Ja!<small>yes</small></button><button class="ballot nein ${a.mine === false ? 'sel' : ''}" data-vote="0">Nein<small>no</small></button></div>
+      <div class="ballots ${a.mine === null ? '' : 'voted'}"><button class="ballot ${a.mine === true ? 'sel' : ''}" data-vote="1" aria-label="Ja (yes)"><img src="/assets/vote-yes.png" alt=""></button><button class="ballot ${a.mine === false ? 'sel' : ''}" data-vote="0" aria-label="Nein (no)"><img src="/assets/vote-no.png" alt=""></button></div>
       <p class="muted center">${a.mine === null ? 'Votes are secret until everyone has voted.' : `You voted ${a.mine ? 'Ja' : 'Nein'}. You can change it until the last vote is in.`}</p></div>`;
     case 'discard': return `<div class="panel"><h2>President: discard one</h2><p class="muted">You drew 3 policies. Tap one to <b>discard</b>. The other 2 go to the Chancellor. Stay silent.</p>
       ${cardsHtml(a.cards, 3)}<button class="btn" id="confirm" ${sel === null ? 'disabled' : ''}>Discard selected</button></div>`;
@@ -237,16 +249,17 @@ function actionHtml(a, g) {
     case 'vetoAnswer': return `<div class="panel"><h2>Veto requested</h2><p>Chancellor <b>${esc(a.chancellor)}</b> wants to veto this agenda. If you agree, both policies are discarded and the election tracker moves.</p>
       ${cardsHtml(a.cards, 2)}<button class="btn" id="vyes">Agree to veto</button><button class="btn alt" id="vno">Refuse</button></div>`;
     case 'peek': return `<div class="panel"><h2>Policy peek</h2><p class="muted">These are the next 3 policies, top one first. Remember them, then tap done. You may tell the truth or lie.</p>
-      ${a.cards.map((c) => c).length ? `<div class="cards" style="grid-template-columns:repeat(3,1fr)">${a.cards.map((c) => policyCard(c)).join('')}</div>` : ''}<p class="muted" style="margin-top:6px">← top of deck</p>
+      <div class="cards" style="grid-template-columns:repeat(3,1fr)">${a.cards.map((c) => policyCard(c)).join('')}</div><p class="muted" style="margin-top:6px">← top of deck</p>
       <button class="btn" id="confirm">Done</button></div>`;
     case 'power': return `<div class="panel"><div class="big-ico">${ICON[a.power]}</div><h2 class="center">${esc(a.info.name)}</h2><p class="muted center">${esc(a.info.desc)}</p>
       <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>${a.power === 'execute' ? 'Execute' : a.power === 'special' ? 'Make next President' : 'Investigate'}</button></div>`;
     case 'investigation': return `<div class="panel center"><h2>${esc(a.name)} is…</h2><p class="muted">Party membership (this never shows who Hitler is).</p>
-      <div class="party" style="background:var(--${a.party === 'liberal' ? 'lib' : 'fas'})"><img src="${ROLE_ART[a.party]}" alt="">${a.party}</div>
+      <img class="party" src="${partyCardSrc(a.party)}" alt="${a.party} party membership">
       <p class="muted">Only you saw this. You can share it or lie.</p><button class="btn" id="confirm">Done</button></div>`;
     case 'dead': return `<div class="panel center"><div class="big-ico">${ICON.skull}</div><h2>You were executed</h2><p class="muted">You can't talk, vote, or run for office. Stay silent — don't reveal your role!</p></div>`;
-    case 'gameover': return `<div class="panel center" style="background:var(--${a.winner === 'liberal' ? 'lib' : 'fas'});color:var(--paper)"><img src="/role-art/${a.winner}" style="width:90px" alt=""><h2 style="font-size:1.8rem">${a.winner === 'liberal' ? 'Liberals' : 'Fascists'} win</h2><p>${esc(a.reason)}</p>
+    case 'gameover': return `<div class="panel center" style="background:${a.winner === 'liberal' ? '#2d6470' : '#8a2f10'};color:#fff;padding:0 0 16px;overflow:hidden"><img src="/assets/victory-${a.winner}-header.png" style="width:100%;display:block" alt="${a.winner} victory"><p style="padding:0 16px">${esc(a.reason)}</p>
+      <img src="${roleCardSrc(S.mine.role, S.mine.art)}" style="width:45%;border-radius:10px" alt="">
       <p class="head">${(S.mine.party === a.winner) ? 'You won!' : 'You lost.'}</p></div>`;
     default: return `<div class="panel center"><h2>${esc(g.announce ? g.announce.title : 'Waiting')}</h2><p class="muted">${esc(waitingText(g))}</p>
       <div class="hold" id="holdBig" style="margin-top:14px">${ICON.lock}Hold to see your role</div></div>`;
@@ -259,6 +272,7 @@ function bindAction(a) {
   app.querySelectorAll('[data-card]').forEach((b) => b.onclick = () => { if (a.type === 'discard' || a.type === 'enact') { sel = Number(b.dataset.card); renderGame(); } });
   app.querySelectorAll('[data-vote]').forEach((b) => b.onclick = () => socket.emit('vote', b.dataset.vote === '1'));
   if ($('ready')) $('ready').onclick = () => socket.emit('ready');
+  if ($('skipNight')) $('skipNight').onclick = () => socket.emit('host:skipNight');
   if ($('veto')) $('veto').onclick = () => socket.emit('veto');
   if ($('vyes')) $('vyes').onclick = () => socket.emit('vetoAnswer', true);
   if ($('vno')) $('vno').onclick = () => socket.emit('vetoAnswer', false);
