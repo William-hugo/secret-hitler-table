@@ -70,6 +70,8 @@ class Game {
     this.lastVote = null; // {votes, passed}
     this.lastEnacted = null; // {policy, byChaos}
     this.log = [];
+    this.shuffles = 0;
+    this.lastGov = null; // {president, chancellor} of the last government that enacted a policy
     this.announce = null; // {title, text, tone}
     this.president = this.players[this.rotationBase].id;
   }
@@ -200,6 +202,7 @@ class Game {
     if (this.deck.length < 3) {
       this.deck = shuffle([...this.deck, ...this.discard], this.rng);
       this.discard = [];
+      this.shuffles += 1;
       this.addLog('The deck was reshuffled with the discard pile.');
     }
   }
@@ -218,6 +221,7 @@ class Game {
     if (this.phase !== 'chancellor' || by !== this.chancellor) return 'Not your turn.';
     if (!(i >= 0 && i < 2)) return 'Pick a policy.';
     const chosen = this.hand.splice(i, 1)[0];
+    this.lastGov = { president: this.president, chancellor: this.chancellor };
     this.discard.push(...this.hand);
     this.hand = [];
     this.enact(chosen, false);
@@ -369,6 +373,9 @@ class Game {
       winReason: this.winReason,
       announce: this.announce,
       log: this.log.slice(-8),
+      shuffles: this.shuffles,
+      lastGov: this.lastGov,
+      playerCount: this.n,
       president: this.president,
       chancellor: this.chancellor,
       nominee: this.nominee,

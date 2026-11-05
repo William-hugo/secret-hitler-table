@@ -89,12 +89,28 @@ Talking, accusing and lying all happen out loud at the table, like the real game
 
 ## Changing the artwork
 
-The emblems are in `public/art/` (`liberal.svg`, `fascist.svg`, `hitler.svg`). Replace a file with your own image using the **same file name** and refresh the pages.
+Put image files in `public/art/custom/` and they replace the built-in art everywhere (TV, phones, cards). Use these names, any of `.png`, `.jpg`, `.webp` or `.svg`:
+
+| File name | Used for |
+|---|---|
+| `liberal` | Liberal role card + Liberal board icon |
+| `fascist` | Fascist role card + Fascist board icon |
+| `hitler` | Hitler role card + logo |
+| `liberal-policy` | Liberal policy tiles (falls back to `liberal`) |
+| `fascist-policy` | Fascist policy tiles (falls back to `fascist`) |
+
+On the hosted site, upload them on GitHub (open `public/art/custom` → Add file → Upload files). The site updates itself in about a minute.
+
+## Sounds
+
+Built-in sound effects play on the TV. To use your own, put audio files (`.mp3`, `.ogg`, `.wav`, `.m4a`) in `public/sounds/custom/` with these names:
+`roles`, `vote-pass`, `vote-fail`, `liberal-policy`, `fascist-policy`, `chaos`, `shuffle`, `execution`, `liberals-win`, `fascists-win` (for example `vote-pass.mp3`).
+The **Narrator** button reads each step aloud with the best voice your TV browser has.
 
 ## Settings
 
 - Different port: set `PORT=4000` before starting.
-- Slower/faster reveal screens (milliseconds): `T_VOTE=6000 T_ENACT=5000 T_EXEC=5000`.
+- Slower/faster reveal screens (milliseconds): `T_VOTE=9000 T_ENACT=7500 T_EXEC=7000`.
 - `npm test` runs the rules tests and 4,000 simulated games (needs `npm install` first).
 
 ## Credits and license

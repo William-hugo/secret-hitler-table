@@ -43,9 +43,17 @@
   .hold svg { width: 28px; height: 28px; } .hold.sm svg { width: 18px; height: 18px; }
   .reveal { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; }
   .reveal.liberal { background: var(--lib); } .reveal.fascist { background: var(--fas); } .reveal.hitler { background: #120f0d; border: 6px solid var(--fas); }
-  .reveal img { width: 46vw; max-width: 220px; }
+  .reveal img { width: 36vw; max-width: 170px; }
   .reveal h1 { font-size: 2.6rem; }
-  .reveal .team { background: rgba(0,0,0,0.25); border-radius: 10px; padding: 12px 16px; font-size: 1.05rem; line-height: 1.6; }
+  .reveal .team { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px 16px; width: 100%; max-width: 340px; }
+  .reveal .team .lbl { font-family: var(--head); text-transform: uppercase; letter-spacing: .1em; font-size: .8rem; opacity: .8; margin-top: 6px; }
+  .reveal .team .who { font-family: var(--head); font-size: 1.7rem; letter-spacing: .03em; line-height: 1.2; }
+  .reveal .team .who.hit { font-size: 2.3rem; background: #120f0d; color: #fff; border: 3px solid var(--paper); border-radius: 8px; padding: 2px 10px; display: inline-block; margin: 4px 0; }
+  .reveal .team .rule { font-size: .9rem; line-height: 1.45; margin-top: 8px; opacity: .92; }
+  .flipcard { display: flex; flex-direction: column; align-items: center; gap: 8px; animation: rflip .45s ease both; }
+  @keyframes rflip { from { transform: perspective(800px) rotateY(80deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes pop { 0% { transform: scale(.94); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  #act > .panel { animation: pop .25s ease both; }
   .status { display: flex; gap: 8px; justify-content: space-between; font-family: var(--head); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
   .status b { color: var(--paper); }
   .party { width: 60%; margin: 12px auto; aspect-ratio: 5/7; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-family: var(--head); text-transform: uppercase; letter-spacing: 0.08em; color: var(--paper); font-size: 1.2rem; }
@@ -98,12 +106,12 @@ function render() {
 
 function renderJoin() {
   app.innerHTML = `
-    <div class="center" style="margin-top:20px"><img src="/art/hitler.svg" style="width:84px" alt=""><h1 style="font-size:1.8rem;margin-top:8px">Secret Hitler</h1></div>
+    <div class="center" style="margin-top:20px"><img src="/role-art/hitler" style="width:84px" alt=""><h1 style="font-size:1.8rem;margin-top:8px">Secret Hitler</h1></div>
     <div class="panel">
       <label class="head" style="font-size:0.85rem">Room code</label>
       <input id="code" class="code" maxlength="4" value="${esc(code)}" autocomplete="off" placeholder="ABCD">
       <label class="head" style="font-size:0.85rem">Your name</label>
-      <input id="name" maxlength="14" value="${esc(localStorage.getItem('sh-name') || '')}" autocomplete="off" placeholder="Phu">
+      <input id="name" maxlength="14" value="${esc(localStorage.getItem('sh-name') || '')}" autocomplete="off" placeholder="Your name">
       ${joinErr ? `<p style="color:var(--fas);margin:0 0 6px">${esc(joinErr)}</p>` : ''}
       <button class="btn" id="go">Join game</button>
     </div>`;
@@ -137,13 +145,27 @@ function showRole(on) {
   const r = document.getElementById('reveal');
   const m = S && S.mine;
   if (!on || !m) { r.style.display = 'none'; return; }
+  const n = (S.game && S.game.playerCount) || 0;
+  const big = n >= 7;
   let team = '';
-  if (m.role === 'fascist') team = `<div class="team"><b>Your team</b><br>${m.teammates.map((t) => `${esc(t.name)} — ${t.role === 'hitler' ? '<b>Hitler</b>' : 'Fascist'}`).join('<br>')}</div>`;
-  if (m.role === 'hitler') team = m.hitlerKnowsTeam ? `<div class="team"><b>Your Fascists</b><br>${m.teammates.map((t) => esc(t.name)).join('<br>')}</div>` : `<div class="team">You don't know who the Fascists are. They know you.</div>`;
-  const goal = m.role === 'liberal' ? 'Enact 5 Liberal policies or execute Hitler.' : m.role === 'hitler' ? 'Stay hidden. Get elected Chancellor after 3 Fascist policies, or enact 6.' : 'Enact 6 Fascist policies or get Hitler elected Chancellor after 3.';
+  if (m.role === 'fascist') {
+    const h = m.teammates.find((t) => t.role === 'hitler');
+    const others = m.teammates.filter((t) => t.role !== 'hitler');
+    team = `<div class="team"><div class="lbl">Hitler is</div><div class="who hit">${esc(h ? h.name : '?')}</div>
+      <div class="lbl">${others.length ? 'Other Fascist' + (others.length > 1 ? 's' : '') : 'Other Fascists'}</div>
+      <div class="who">${others.length ? others.map((t) => esc(t.name)).join(', ') : 'None — it\'s just you and Hitler'}</div>
+      <div class="rule">${big ? 'In a 7–10 player game, Hitler does NOT know who you are. Help him quietly.' : 'In a 5–6 player game, Hitler also knows you are a Fascist.'}</div></div>`;
+  }
+  if (m.role === 'hitler') {
+    team = m.hitlerKnowsTeam
+      ? `<div class="team"><div class="lbl">Your Fascist${m.teammates.length > 1 ? 's' : ''}</div><div class="who">${m.teammates.map((t) => esc(t.name)).join(', ')}</div><div class="rule">In a 5–6 player game, Hitler knows the Fascists.</div></div>`
+      : `<div class="team"><div class="lbl">Your Fascists</div><div class="who">Unknown</div><div class="rule">In a 7–10 player game, Hitler doesn't know who the Fascists are, but they know you. Act like a Liberal and get elected Chancellor.</div></div>`;
+  }
+  if (m.role === 'liberal') team = `<div class="team"><div class="rule">You don't know anyone else's role. Watch the votes and the policies to find the Fascists and Hitler.</div></div>`;
+  const goal = m.role === 'liberal' ? 'Win: enact 5 Liberal policies, or execute Hitler.' : 'Win: enact 6 Fascist policies, or get Hitler elected Chancellor after 3 Fascist policies.';
   r.className = 'reveal ' + m.role;
-  r.innerHTML = `<div class="head" style="opacity:.8">Secret role</div><img src="${ROLE_ART[m.role]}" alt=""><h1>${ROLE_NAME[m.role]}</h1>
-    <div class="head" style="opacity:.8">Party: ${m.party}</div>${team}<p style="max-width:300px;opacity:.9">${goal}</p><p style="opacity:.6;font-size:.85rem">Let go to hide</p>`;
+  r.innerHTML = `<div class="flipcard"><div class="head" style="opacity:.8">Secret role</div><img src="${ROLE_ART[m.role]}" alt=""><h1>${ROLE_NAME[m.role]}</h1>
+    <div class="head" style="opacity:.8;font-size:.9rem">Party: ${m.party}</div>${team}<p style="max-width:320px;opacity:.9;margin:6px auto">${goal}</p><p style="opacity:.6;font-size:.85rem">Let go to hide</p></div>`;
   r.style.display = 'flex';
 }
 function bindHold(el) {
@@ -185,7 +207,10 @@ function waitingText(g) {
     chancellor: `Chancellor ${name(g.chancellor)} is enacting a policy. No talking!`, veto: `President ${name(g.president)} is deciding on the veto.`,
     power: `President ${name(g.president)} is using a power: ${g.powerInfo ? g.powerInfo.name : ''}.`, powerResult: `${name(g.president)} is looking at the investigation.`,
     voteResult: 'Votes are on the TV.', enacted: 'A policy was enacted — look at the TV.', executed: 'Someone was executed — look at the TV.' }[g.phase];
-  return t || (g.announce ? g.announce.text : '');
+  let claim = '';
+  if (g.phase === 'nominate' && g.lastGov && (g.lastGov.president === S.me.id || g.lastGov.chancellor === S.me.id))
+    claim = ' You were in the last government: tell the table which policies you saw. You can lie.';
+  return (t || (g.announce ? g.announce.text : '')) + claim;
 }
 
 function cardsHtml(cards, cols, cls = '') {
@@ -197,7 +222,7 @@ function actionHtml(a, g) {
     case 'ready': return `<div class="panel center"><h2>Your secret role</h2><p class="muted">Cover your screen, then hold the button below. Don't show anyone.</p>
       <div class="hold" id="holdBig" style="margin:14px 0">${ICON.lock}Hold to see your role</div>
       ${a.done ? '<p class="muted">Waiting for everyone else…</p>' : '<button class="btn" id="ready">I\'m ready</button>'}</div>`;
-    case 'nominate': return `<div class="panel"><h2>You're the Presidential Candidate</h2><p class="muted">Nominate a Chancellor. Term-limited players aren't listed.</p>
+    case 'nominate': return `<div class="panel"><h2>You're the Presidential Candidate</h2><p class="muted">Talk it over with the table first, then nominate a Chancellor. Term-limited players aren't listed.</p>
       <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>Nominate</button></div>`;
     case 'vote': return `<div class="panel"><h2>Vote</h2><p><b>${esc(a.president)}</b> as President, <b>${esc(a.nominee)}</b> as Chancellor?</p>
@@ -221,7 +246,7 @@ function actionHtml(a, g) {
       <div class="party" style="background:var(--${a.party === 'liberal' ? 'lib' : 'fas'})"><img src="${ROLE_ART[a.party]}" alt="">${a.party}</div>
       <p class="muted">Only you saw this. You can share it or lie.</p><button class="btn" id="confirm">Done</button></div>`;
     case 'dead': return `<div class="panel center"><div class="big-ico">${ICON.skull}</div><h2>You were executed</h2><p class="muted">You can't talk, vote, or run for office. Stay silent — don't reveal your role!</p></div>`;
-    case 'gameover': return `<div class="panel center" style="background:var(--${a.winner === 'liberal' ? 'lib' : 'fas'});color:var(--paper)"><img src="/art/${a.winner}.svg" style="width:90px" alt=""><h2 style="font-size:1.8rem">${a.winner === 'liberal' ? 'Liberals' : 'Fascists'} win</h2><p>${esc(a.reason)}</p>
+    case 'gameover': return `<div class="panel center" style="background:var(--${a.winner === 'liberal' ? 'lib' : 'fas'});color:var(--paper)"><img src="/role-art/${a.winner}" style="width:90px" alt=""><h2 style="font-size:1.8rem">${a.winner === 'liberal' ? 'Liberals' : 'Fascists'} win</h2><p>${esc(a.reason)}</p>
       <p class="head">${(S.mine.party === a.winner) ? 'You won!' : 'You lost.'}</p></div>`;
     default: return `<div class="panel center"><h2>${esc(g.announce ? g.announce.title : 'Waiting')}</h2><p class="muted">${esc(waitingText(g))}</p>
       <div class="hold" id="holdBig" style="margin-top:14px">${ICON.lock}Hold to see your role</div></div>`;

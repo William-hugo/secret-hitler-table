@@ -14,6 +14,27 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
+// Artwork: put your own images in public/art/custom/ (liberal, fascist, hitler,
+// liberal-policy, fascist-policy — .png/.jpg/.webp/.svg) and they replace the defaults.
+const fs = require('fs');
+const ART_FALLBACK = { 'liberal-policy': 'liberal', 'fascist-policy': 'fascist' };
+app.get('/role-art/:name', (req, res) => {
+  const name = String(req.params.name).replace(/[^a-z-]/g, '');
+  for (const ext of ['png', 'jpg', 'jpeg', 'webp', 'svg']) {
+    const f = path.join(__dirname, 'public', 'art', 'custom', `${name}.${ext}`);
+    if (fs.existsSync(f)) return res.sendFile(f);
+  }
+  const def = path.join(__dirname, 'public', 'art', `${ART_FALLBACK[name] || name}.svg`);
+  if (fs.existsSync(def)) return res.sendFile(def);
+  res.status(404).end();
+});
+// Sounds: put audio files in public/sounds/custom/ named after events (see README).
+app.get('/sounds/list', (req, res) => {
+  const dir = path.join(__dirname, 'public', 'sounds', 'custom');
+  let files = [];
+  try { files = fs.readdirSync(dir).filter((f) => /\.(mp3|ogg|wav|m4a)$/i.test(f)); } catch (e) {}
+  res.json(files);
+});
 app.get('/tv', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tv.html')));
 app.get('/play', (req, res) => res.sendFile(path.join(__dirname, 'public', 'play.html')));
 
@@ -41,9 +62,9 @@ function baseFor(socket) {
 
 // timings (ms) for automatic screens on the TV
 const T = {
-  voteResult: Number(process.env.T_VOTE || 6000),
-  enacted: Number(process.env.T_ENACT || 5000),
-  executed: Number(process.env.T_EXEC || 5000),
+  voteResult: Number(process.env.T_VOTE || 9000),
+  enacted: Number(process.env.T_ENACT || 7500),
+  executed: Number(process.env.T_EXEC || 7000),
 };
 
 const rooms = new Map(); // code -> room
