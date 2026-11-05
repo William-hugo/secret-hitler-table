@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Hitler — TV board</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  html { font-size: 1.04vw; }
+  body { min-height: 100vh; overflow: hidden; }
+  #app { height: 100vh; display: flex; flex-direction: column; padding: 1.2rem 1.6rem; gap: 1rem; }
+  .top { display: flex; align-items: center; gap: 1.2rem; }
+  .brand { display: flex; align-items: center; gap: 0.6rem; font-size: 1.4rem; color: var(--paper); }
+  .brand img { width: 2.4rem; }
+  .banner { flex: 1; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.7rem 1.2rem; min-height: 4.6rem; display: flex; flex-direction: column; justify-content: center; }
+  .banner h2 { font-size: 1.6rem; }
+  .banner p { margin: 0.15rem 0 0; font-size: 1.1rem; }
+  .banner.good { background: #d8e7c9; } .banner.bad { background: var(--fas-light); }
+  .banner.liberal { background: var(--lib); color: var(--paper); } .banner.fascist { background: var(--fas); color: var(--paper); }
+  .code { text-align: center; font-family: var(--head); color: var(--muted); font-size: 0.9rem; letter-spacing: 0.1em; }
+  .code b { display: block; color: var(--paper); font-size: 2rem; letter-spacing: 0.15em; }
+  .main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.2rem; min-height: 0; }
+  .boards { display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; }
+  .track { border-radius: 0.8rem; padding: 0.8rem 1rem; }
+  .track h3 { font-size: 1.1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+  .track h3 img { width: 1.6rem; }
+  .track.lib { background: var(--lib-light); color: #173b4d; border: 0.25rem solid var(--lib); }
+  .track.fas { background: var(--fas-light); color: #5a1a0e; border: 0.25rem solid var(--fas); }
+  .slots { display: grid; gap: 0.7rem; }
+  .slot { aspect-ratio: 5 / 7; border-radius: 0.5rem; border: 0.15rem dashed currentColor; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: var(--head); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.3rem; gap: 0.3rem; opacity: 0.85; max-height: 11rem; }
+  .slot svg { width: 2rem; height: 2rem; }
+  .slot .policy { width: 100%; height: 100%; font-size: 0.9rem; border-color: rgba(0,0,0,0.25); }
+  .slot.filled { border: none; opacity: 1; padding: 0; }
+  .slot.win { border-style: solid; }
+  .hz { margin-top: 0.5rem; font-size: 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hz span { padding: 0.2rem 0.6rem; border-radius: 0.3rem; background: rgba(0,0,0,0.08); }
+  .hz span.on { background: var(--fas); color: var(--paper); }
+  .row { display: flex; gap: 1rem; align-items: stretch; }
+  .tracker { flex: 1; background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 1rem; display: flex; align-items: center; gap: 1rem; }
+  .tracker .dots { display: flex; gap: 0.8rem; align-items: center; }
+  .dot { width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 0.18rem solid var(--paper-2); display: flex; align-items: center; justify-content: center; font-family: var(--head); font-size: 0.65rem; color: var(--muted); }
+  .dot.on { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .piles { background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 1rem; display: flex; gap: 1.4rem; font-family: var(--head); align-items: center; }
+  .piles b { font-size: 1.8rem; display: block; color: var(--paper); }
+  .piles div { text-align: center; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .log { flex: 1; background: var(--ink-2); border-radius: 0.8rem; padding: 0.7rem 1rem; font-size: 0.9rem; color: var(--paper-2); overflow: hidden; min-height: 0; }
+  .log div { padding: 0.15rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .players { background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 0.8rem 2.6rem; display: flex; flex-direction: column; gap: 0.45rem; overflow: hidden; }
+  .players h3 { font-size: 1rem; color: var(--muted); margin: 0 0 0.2rem 0.3rem; }
+  .pl { display: flex; align-items: center; gap: 0.6rem; background: var(--paper); color: var(--ink); border-radius: 0.5rem; padding: 0.45rem 0.6rem; font-size: 1.05rem; }
+  .pl .seat { font-family: var(--head); color: var(--muted); width: 1.2rem; }
+  .pl .nm { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pl.dead { background: #4a443d; color: #8d8478; text-decoration: line-through; }
+  .pl.pres { outline: 0.22rem solid var(--gold); }
+  .pl.off .nm::after { content: ' (offline)'; font-weight: 400; font-size: 0.8rem; color: var(--fas); }
+  .tag { font-family: var(--head); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 0.3rem; display: inline-flex; gap: 0.25rem; align-items: center; white-space: nowrap; }
+  .tag.p { background: var(--gold); color: var(--ink); } .tag.c { background: var(--ink); color: var(--paper); }
+  .tag.n { background: var(--paper-2); color: var(--ink); border: 1px dashed var(--ink); }
+  .tag.t { background: #ddd2bd; color: #6b5f4d; } .tag.v { background: #3b6d11; color: #fff; } .tag.s { background: var(--lib); color: #fff; }
+  /* overlays */
+  .ov { position: fixed; inset: 0; background: rgba(20,17,14,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4rem; z-index: 5; text-align: center; padding: 2rem; }
+  .ov h1 { font-size: 3.4rem; }
+  .ov p { font-size: 1.4rem; max-width: 50rem; margin: 0; color: var(--paper-2); }
+  .ballots { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; max-width: 80rem; }
+  .ballot { width: 8.5rem; text-align: center; }
+  .ballot .card { aspect-ratio: 5/7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--head); font-size: 2rem; border: 0.2rem solid var(--paper); animation: flip 0.6s ease both; }
+  .ballot .card.ja { background: var(--paper); color: var(--ink); } .ballot .card.nein { background: var(--ink-2); color: var(--paper); }
+  .ballot div:last-child { margin-top: 0.4rem; font-size: 1.05rem; }
+  @keyframes flip { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
+  @keyframes drop { from { transform: translateY(-40vh) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  .bigcard { width: 14rem; font-size: 1.6rem; animation: drop 0.8s cubic-bezier(.2,.9,.3,1.2) both; }
+  .roles { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; max-width: 80rem; }
+  .roles .r { width: 9rem; background: var(--paper); color: var(--ink); border-radius: 0.6rem; padding: 0.7rem; }
+  .roles .r img { width: 4.5rem; } .roles .r b { display: block; font-size: 1.05rem; }
+  .roles .r.dead { opacity: 0.55; }
+  /* lobby */
+  .lobby { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
+  .join { background: var(--paper); color: var(--ink); border-radius: 1rem; padding: 2rem; text-align: center; }
+  .join img { width: 17rem; image-rendering: pixelated; }
+  .join .url { font-family: var(--head); font-size: 1.2rem; letter-spacing: 0.04em; margin-top: 0.6rem; word-break: break-all; }
+  .join .bigcode { font-family: var(--head); font-size: 4.5rem; letter-spacing: 0.25em; color: var(--fas); line-height: 1.1; }
+  .lob-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .hint { color: var(--muted); font-size: 1rem; margin-top: 1rem; line-height: 1.5; }
+  .emblems { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; } .emblems img { width: 4.5rem; }
+  .corner { position: fixed; right: 1rem; bottom: 0.8rem; display: flex; gap: 0.5rem; z-index: 9; }
+  .corner button { background: var(--ink-2); color: var(--muted); border: 1px solid #4a443d; border-radius: 0.4rem; padding: 0.3rem 0.7rem; font-size: 0.8rem; font-family: var(--head); letter-spacing: 0.06em; }
+  .credit { position: fixed; left: 1.6rem; bottom: 0.6rem; font-size: 0.7rem; color: #6f6659; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="corner"><button id="narr">Narrator: off</button><button id="fs">Full screen</button></div>
+<div class="credit">Based on Secret Hitler by Max Temkin, Mike Boxleiter, Tommy Maranges and Mac Schubert · CC BY-NC-SA 4.0 · fan-made, not for sale</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/common.js"></script>
+<script>
+const socket = io();
+const app = document.getElementById('app');
+let info = null, S = null, narrator = false, lastSpoken = null, lastSound = null;
+const params = new URLSearchParams(location.search);
+
+function connect() {
+  socket.emit('tv:create', params.get('room') || localStorage.getItem('sh-tv-room'), (r) => {
+    info = r;
+    localStorage.setItem('sh-tv-room', r.code);
+    history.replaceState(null, '', '/tv?room=' + r.code);
+    render();
+  });
+}
+socket.on('connect', connect);
+socket.on('state', (s) => { S = s; render(); speak(); sound(); });
+
+document.getElementById('fs').onclick = () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+const narrBtn = document.getElementById('narr');
+narrBtn.onclick = () => { narrator = !narrator; narrBtn.textContent = 'Narrator: ' + (narrator ? 'on' : 'off'); if (narrator) say('Narrator on.'); };
+
+function say(t) { if (!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = 0.95; speechSynthesis.speak(u); }
+function speak() {
+  const a = S && S.game && S.game.announce;
+  if (!narrator || !a || a.at === lastSpoken) return;
+  lastSpoken = a.at; say(a.title + '. ' + (a.text || ''));
+}
+let ctx;
+function tone(freqs, dur = 0.18) {
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+      const t = ctx.currentTime + i * dur; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 1.6); o.start(t); o.stop(t + dur * 1.8); });
+  } catch (e) {}
+}
+function sound() {
+  const g = S && S.game; if (!g) return;
+  const key = g.phase + (g.announce && g.announce.at);
+  if (key === lastSound) return; lastSound = key;
+  if (g.phase === 'voteResult') tone(g.lastVote.passed ? [392, 523, 659] : [330, 262, 196]);
+  if (g.phase === 'enacted') tone(g.lastEnacted.policy === 'L' ? [523, 659, 784] : [220, 185, 147], 0.25);
+  if (g.phase === 'gameover') tone([392, 494, 587, 784], 0.3);
+  if (g.phase === 'executed') tone([110, 82], 0.4);
+}
+
+function render() {
+  if (!info) { app.innerHTML = '<div class="ov"><h1>Connecting…</h1></div>'; return; }
+  if (!S || !S.game) return renderLobby();
+  renderGame(S.game);
+}
+
+function roleCounts(n) {
+  const t = { 5: [3, 1], 6: [4, 1], 7: [4, 2], 8: [5, 2], 9: [5, 3], 10: [6, 3] }[n];
+  return t ? `${t[0]} Liberals, ${t[1]} Fascist${t[1] > 1 ? 's' : ''} + Hitler` : '';
+}
+
+function renderLobby() {
+  const L = S ? S.lobby : { players: [] };
+  const n = L.players.length;
+  app.innerHTML = `
+  <div class="top"><div class="brand head"><img src="/art/hitler.svg" alt="">Secret Hitler</div><div style="flex:1"></div></div>
+  <div class="lobby">
+    <div class="join">
+      <div class="emblems"><img src="/art/liberal.svg" alt=""><img src="/art/fascist.svg" alt=""><img src="/art/hitler.svg" alt=""></div>
+      <h2 style="font-size:1.6rem">Scan to join</h2>
+      <img src="${info.qr}" alt="QR code to join">
+      <div class="url">${esc(info.base)}/play</div>
+      <div class="hint" style="color:#6b5f4d;margin-top:0.4rem">Room code</div>
+      <div class="bigcode">${esc(info.code)}</div>
+    </div>
+    <div>
+      <h2 style="font-size:2rem;margin-bottom:0.8rem">Players · ${n}/10</h2>
+      <div class="lob-list">
+        ${L.players.map((p, i) => `<div class="pl ${p.connected ? '' : 'off'}"><span class="seat">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}</div>`).join('') || '<div class="hint">Waiting for players…</div>'}
+      </div>
+      <div class="hint">
+        ${n >= 5 ? `<b style="color:var(--paper)">${roleCounts(n)}.</b> ` : `Need ${5 - n} more player${5 - n === 1 ? '' : 's'} (5–10). `}
+        Join in seating order going clockwise around the room — the presidency passes in this order. The host can reorder seats and start the game from their phone.
+      </div>
+    </div>
+  </div>`;
+}
+
+function slotHtml(kind, i, filled, power, n) {
+  if (filled) return `<div class="slot filled">${policyCard(kind === 'lib' ? 'L' : 'F')}</div>`;
+  if (kind === 'lib') return `<div class="slot ${i === 4 ? 'win' : ''}">${i === 4 ? `<img src="/art/liberal.svg" style="width:2.6rem" alt="">Liberals win` : ''}</div>`;
+  if (i === 5) return `<div class="slot win"><img src="/art/fascist.svg" style="width:2.6rem" alt="">Fascists win</div>`;
+  const names = { investigate: 'Investigate loyalty', special: 'Special election', peek: 'Policy peek', execute: 'Execution' };
+  return `<div class="slot">${power ? ICON[power] + names[power] : ''}${i === 4 ? '<div style="margin-top:0.2rem">+ veto power</div>' : ''}</div>`;
+}
+
+function renderGame(g) {
+  const L = S.lobby;
+  const a = g.announce || { title: '', text: '' };
+  const conn = Object.fromEntries(L.players.map((p) => [p.id, p.connected]));
+  const n = g.players.length;
+  app.innerHTML = `
+  <div class="top">
+    <div class="brand head"><img src="/art/hitler.svg" alt="">Secret Hitler</div>
+    <div class="banner ${a.tone || ''}"><h2>${esc(a.title)}</h2>${a.text ? `<p>${esc(a.text)}</p>` : ''}</div>
+    <div class="code">Room<b>${esc(L.code)}</b></div>
+  </div>
+  <div class="main">
+    <div class="boards">
+      <div class="track lib"><h3><img src="/art/liberal.svg" alt="">Liberal policies · ${g.liberal}/5</h3>
+        <div class="slots" style="grid-template-columns:repeat(5,1fr);padding:0 8%">${[0, 1, 2, 3, 4].map((i) => slotHtml('lib', i, i < g.liberal)).join('')}</div>
+      </div>
+      <div class="track fas"><h3><img src="/art/fascist.svg" alt="">Fascist policies · ${g.fascist}/6 <span style="font-family:var(--body);text-transform:none;letter-spacing:0;font-weight:400;font-size:0.85rem;margin-left:auto">${n <= 6 ? '5–6' : n <= 8 ? '7–8' : '9–10'} player board</span></h3>
+        <div class="slots" style="grid-template-columns:repeat(6,1fr)">${[0, 1, 2, 3, 4, 5].map((i) => slotHtml('fas', i, i < g.fascist, g.board[i], n)).join('')}</div>
+        <div class="hz"><span class="${g.fascist >= 3 ? 'on' : ''}">From 3 Fascist policies: if Hitler is elected Chancellor, Fascists win</span><span class="${g.vetoUnlocked ? 'on' : ''}">${ICON.veto} Veto ${g.vetoUnlocked ? 'unlocked' : 'unlocks at 5'}</span></div>
+      </div>
+      <div class="row">
+        <div class="tracker"><div class="head" style="font-size:0.95rem;color:var(--muted)">Election<br>tracker</div>
+          <div class="dots">${[1, 2, 3].map((i) => `<div class="dot ${g.tracker >= i ? 'on' : ''}">${i === 3 ? 'Chaos' : 'Fail'}</div>`).join('')}</div>
+          <div style="font-size:0.85rem;color:var(--muted);max-width:18rem">3 failed governments in a row: the top policy is enacted, its power is ignored, and term limits reset.</div>
+        </div>
+        <div class="piles"><div><b>${g.deck}</b>Draw pile</div><div><b>${g.discard}</b>Discards</div></div>
+      </div>
+      <div class="log">${g.log.slice().reverse().map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+    </div>
+    <div class="players"><h3 class="head">Seats · clockwise</h3>
+      ${g.players.map((p, i) => `<div class="pl ${p.alive ? '' : 'dead'} ${p.isPresident ? 'pres' : ''} ${conn[p.id] === false ? 'off' : ''}">
+        <span class="seat">${i + 1}</span><span class="nm">${esc(p.name)}</span>
+        ${p.isPresident ? `<span class="tag p">${ICON.crown} Pres</span>` : ''}
+        ${p.isChancellor ? `<span class="tag c">${ICON.gavel} Chanc</span>` : ''}
+        ${p.isNominee && !p.isChancellor ? '<span class="tag n">Nominee</span>' : ''}
+        ${p.termLimited && p.alive && !p.isChancellor ? `<span class="tag t">${ICON.lock}</span>` : ''}
+        ${p.notHitler && p.alive ? `<span class="tag s" title="Confirmed not Hitler">${ICON.shield} Not H</span>` : ''}
+        ${!p.alive ? `<span class="tag t">${ICON.skull}</span>` : ''}
+        ${p.voted ? `<span class="tag v">${ICON.check}</span>` : ''}
+        ${p.ready ? `<span class="tag v">${ICON.check}</span>` : ''}
+      </div>`).join('')}
+      <div style="font-size:0.8rem;color:var(--muted);margin-top:auto;line-height:1.5">${ICON.lock} term-limited (can't be Chancellor) · ${ICON.shield} confirmed not Hitler</div>
+    </div>
+  </div>
+  ${overlay(g)}`;
+}
+
+function overlay(g) {
+  if (g.phase === 'roles') {
+    const ready = g.players.filter((p) => p.ready).length;
+    return `<div class="ov"><div class="emblems"><img src="/art/liberal.svg" alt=""><img src="/art/fascist.svg" alt=""><img src="/art/hitler.svg" alt=""></div>
+      <h1>Look at your phone</h1><p>Hold the button to see your secret role. Fascists will see their team. Tap "I'm ready" when you're done.</p>
+      <p class="head" style="font-size:1.8rem;color:var(--paper)">${ready} / ${g.players.length} ready</p></div>`;
+  }
+  if (g.phase === 'voteResult' && g.lastVote) {
+    const v = g.lastVote;
+    return `<div class="ov"><h1 style="color:${v.passed ? '#a9d18e' : 'var(--fas-light)'}">${v.passed ? 'Government elected' : 'Government rejected'}</h1>
+      <div class="ballots">${g.players.filter((p) => p.id in v.votes).map((p, i) => `<div class="ballot"><div class="card ${v.votes[p.id] ? 'ja' : 'nein'}" style="animation-delay:${i * 0.12}s">${v.votes[p.id] ? 'Ja!' : 'Nein'}</div><div>${esc(p.name)}</div></div>`).join('')}</div>
+      <p class="head" style="font-size:1.6rem">Ja ${v.ja} · Nein ${v.nein}</p></div>`;
+  }
+  if (g.phase === 'enacted' && g.lastEnacted) {
+    const e = g.lastEnacted;
+    return `<div class="ov"><h1>${e.byChaos ? 'Chaos!' : 'Policy enacted'}</h1>${policyCard(e.policy, 'bigcard')}
+      <p>${esc(g.announce.text || '')}</p></div>`;
+  }
+  if (g.phase === 'executed') {
+    return `<div class="ov"><div style="font-size:8rem;color:var(--fas)">${ICON.skull}</div><h1>${esc(g.announce.title)}</h1><p>${esc(g.announce.text)}</p></div>`;
+  }
+  if (g.phase === 'gameover') {
+    const lib = g.winner === 'liberal';
+    return `<div class="ov" style="background:${lib ? 'rgba(23,59,77,0.96)' : 'rgba(90,26,14,0.96)'}">
+      <img src="/art/${lib ? 'liberal' : 'fascist'}.svg" style="width:9rem" alt="">
+      <h1>${lib ? 'Liberals win' : 'Fascists win'}</h1><p>${esc(g.winReason)}</p>
+      <div class="roles">${g.players.map((p) => `<div class="r ${p.alive ? '' : 'dead'}"><img src="${ROLE_ART[p.role]}" alt=""><b>${esc(p.name)}</b>${ROLE_NAME[p.role]}${p.alive ? '' : ' · executed'}</div>`).join('')}</div>
+      <p style="font-size:1rem">The host can start a new game from their phone.</p></div>`;
+  }
+  return '';
+}
+render();
+</script>
+</body>
+</html>

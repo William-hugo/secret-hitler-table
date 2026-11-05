@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1d1a17">
+<title>Secret Hitler — player</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { font-size: 17px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding: 14px 16px 120px; display: flex; flex-direction: column; gap: 14px; }
+  .bar { display: flex; align-items: center; gap: 10px; }
+  .bar .me { flex: 1; font-family: var(--head); letter-spacing: 0.05em; text-transform: uppercase; font-size: 1.05rem; }
+  .bar .me small { display: block; color: var(--muted); font-size: 0.75rem; }
+  .panel { background: var(--paper); color: var(--ink); border-radius: 14px; padding: 18px; }
+  .panel h2 { font-size: 1.3rem; margin-bottom: 6px; }
+  .panel p { margin: 6px 0; line-height: 1.5; }
+  .muted { color: #6b5f4d; font-size: 0.95rem; }
+  input { width: 100%; font: inherit; font-size: 1.2rem; padding: 12px 14px; border-radius: 10px; border: 2px solid var(--paper-2); background: #fffaf0; color: var(--ink); margin: 6px 0 12px; }
+  input.code { text-transform: uppercase; letter-spacing: 0.3em; font-family: var(--head); text-align: center; font-size: 1.6rem; }
+  .btn { display: block; width: 100%; border: none; border-radius: 10px; padding: 15px; font-family: var(--head); text-transform: uppercase; letter-spacing: 0.08em; font-size: 1.05rem; background: var(--ink); color: var(--paper); margin-top: 8px; }
+  .btn.alt { background: transparent; color: var(--ink); border: 2px solid var(--ink); }
+  .btn.red { background: var(--fas); } .btn.blue { background: var(--lib); }
+  .btn.gold { background: var(--gold); color: var(--ink); }
+  .btn:disabled { opacity: 0.4; }
+  .list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 10px; border: 2px solid var(--paper-2); background: #fffaf0; font-size: 1.1rem; font-weight: 600; text-align: left; color: var(--ink); width: 100%; }
+  .opt.sel { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .opt .small { margin-left: auto; display: flex; gap: 6px; }
+  .opt .small button { border: 1px solid #b9ab8f; background: transparent; border-radius: 6px; padding: 4px 9px; color: inherit; }
+  .cards { display: grid; gap: 10px; margin-top: 12px; }
+  .cards .policy { font-size: 1rem; border-width: 4px; border-color: transparent; transition: transform 0.15s; }
+  .cards .policy.sel { border-color: var(--gold); transform: translateY(-6px); }
+  .cards .policy.gone { opacity: 0.25; }
+  .ballots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .ballot { aspect-ratio: 5/6; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--head); font-size: 2.2rem; border: 4px solid transparent; text-transform: uppercase; }
+  .ballot.ja { background: #fffaf0; color: var(--ink); border-color: var(--paper-2); }
+  .ballot.nein { background: var(--ink-2); color: var(--paper); }
+  .ballot.sel { border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold); }
+  .ballot small { font-size: 0.75rem; font-family: var(--body); text-transform: none; opacity: 0.7; }
+  .hold { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px; border-radius: 14px; background: var(--ink-2); color: var(--paper); border: 2px dashed #5a5248; font-family: var(--head); letter-spacing: 0.06em; text-transform: uppercase; touch-action: none; }
+  .hold.sm { flex-direction: row; padding: 8px 12px; font-size: 0.8rem; }
+  .hold svg { width: 28px; height: 28px; } .hold.sm svg { width: 18px; height: 18px; }
+  .reveal { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; }
+  .reveal.liberal { background: var(--lib); } .reveal.fascist { background: var(--fas); } .reveal.hitler { background: #120f0d; border: 6px solid var(--fas); }
+  .reveal img { width: 46vw; max-width: 220px; }
+  .reveal h1 { font-size: 2.6rem; }
+  .reveal .team { background: rgba(0,0,0,0.25); border-radius: 10px; padding: 12px 16px; font-size: 1.05rem; line-height: 1.6; }
+  .status { display: flex; gap: 8px; justify-content: space-between; font-family: var(--head); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .status b { color: var(--paper); }
+  .party { width: 60%; margin: 12px auto; aspect-ratio: 5/7; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-family: var(--head); text-transform: uppercase; letter-spacing: 0.08em; color: var(--paper); font-size: 1.2rem; }
+  .party img { width: 60%; }
+  .center { text-align: center; }
+  .big-ico { font-size: 3rem; text-align: center; color: var(--fas); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="reveal" class="reveal" style="display:none"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/common.js"></script>
+<script>
+const socket = io();
+const app = document.getElementById('app');
+const params = new URLSearchParams(location.search);
+let code = (params.get('room') || localStorage.getItem('sh-room') || '').toUpperCase();
+let S = null, joined = false, sel = null, selKey = null, lastActionKey = null, joinErr = '';
+
+function tokenFor(c) { return localStorage.getItem('sh-token-' + c); }
+function tryRejoin() {
+  const t = code && tokenFor(code);
+  if (!t) return render();
+  socket.emit('join', { code, token: t }, (r) => { if (r.ok) { joined = true; } else { localStorage.removeItem('sh-token-' + code); } render(); });
+}
+socket.on('connect', tryRejoin);
+socket.on('state', (s) => { S = s; render(); });
+socket.on('toast', (m) => { const d = document.createElement('div'); d.className = 'toast'; d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), 2800); });
+
+// keep the screen awake during the game
+async function wake() { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch (e) {} }
+document.addEventListener('visibilitychange', wake);
+
+function doJoin() {
+  code = document.getElementById('code').value.trim().toUpperCase();
+  const name = document.getElementById('name').value.trim();
+  socket.emit('join', { code, name, token: tokenFor(code) }, (r) => {
+    if (r.error) { joinErr = r.error; return render(); }
+    localStorage.setItem('sh-room', r.code); localStorage.setItem('sh-token-' + r.code, r.token); localStorage.setItem('sh-name', name);
+    joined = true; joinErr = ''; wake(); render();
+  });
+}
+
+function render() {
+  if (!joined || !S || !S.me) return renderJoin();
+  if (!S.game) return renderLobby();
+  renderGame();
+}
+
+function renderJoin() {
+  app.innerHTML = `
+    <div class="center" style="margin-top:20px"><img src="/art/hitler.svg" style="width:84px" alt=""><h1 style="font-size:1.8rem;margin-top:8px">Secret Hitler</h1></div>
+    <div class="panel">
+      <label class="head" style="font-size:0.85rem">Room code</label>
+      <input id="code" class="code" maxlength="4" value="${esc(code)}" autocomplete="off" placeholder="ABCD">
+      <label class="head" style="font-size:0.85rem">Your name</label>
+      <input id="name" maxlength="14" value="${esc(localStorage.getItem('sh-name') || '')}" autocomplete="off" placeholder="Phu">
+      ${joinErr ? `<p style="color:var(--fas);margin:0 0 6px">${esc(joinErr)}</p>` : ''}
+      <button class="btn" id="go">Join game</button>
+    </div>`;
+  document.getElementById('go').onclick = doJoin;
+}
+
+function renderLobby() {
+  const L = S.lobby, me = S.me;
+  const n = L.players.length;
+  app.innerHTML = `
+    <div class="bar"><div class="me">${esc(me.name)}<small>Room ${esc(L.code)}${me.isHost ? ' · you are the host' : ''}</small></div></div>
+    <div class="panel">
+      <h2>You're in</h2>
+      <p class="muted">${n}/10 players. ${n < 5 ? `Waiting for ${5 - n} more.` : 'Ready when the host is.'} Look at the TV.</p>
+      ${me.isHost ? `<p class="muted">Put everyone in seating order, going clockwise. The presidency passes in this order.</p>` : ''}
+      <div class="list">${L.players.map((p, i) => `<div class="opt" style="cursor:default"><span style="color:var(--muted);width:18px">${i + 1}</span>${esc(p.name)}
+        ${me.isHost ? `<span class="small"><button data-mv="${p.id}" data-d="-1" aria-label="Move up">↑</button><button data-mv="${p.id}" data-d="1" aria-label="Move down">↓</button>${p.id !== me.id ? `<button data-kick="${p.id}" aria-label="Remove">✕</button>` : ''}</span>` : ''}</div>`).join('')}</div>
+      ${me.isHost ? `<button class="btn red" id="start" ${n < 5 ? 'disabled' : ''}>Start game</button>` : ''}
+      <button class="btn alt" id="leave">Leave room</button>
+    </div>`;
+  app.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => socket.emit('host:move', b.dataset.mv, Number(b.dataset.d)));
+  app.querySelectorAll('[data-kick]').forEach((b) => b.onclick = () => socket.emit('host:kick', b.dataset.kick));
+  const st = document.getElementById('start'); if (st) st.onclick = () => socket.emit('host:start');
+  document.getElementById('leave').onclick = () => { socket.emit('leave'); localStorage.removeItem('sh-token-' + code); joined = false; render(); };
+}
+
+// ---- hold-to-reveal role ----
+function showRole(on) {
+  const r = document.getElementById('reveal');
+  const m = S && S.mine;
+  if (!on || !m) { r.style.display = 'none'; return; }
+  let team = '';
+  if (m.role === 'fascist') team = `<div class="team"><b>Your team</b><br>${m.teammates.map((t) => `${esc(t.name)} — ${t.role === 'hitler' ? '<b>Hitler</b>' : 'Fascist'}`).join('<br>')}</div>`;
+  if (m.role === 'hitler') team = m.hitlerKnowsTeam ? `<div class="team"><b>Your Fascists</b><br>${m.teammates.map((t) => esc(t.name)).join('<br>')}</div>` : `<div class="team">You don't know who the Fascists are. They know you.</div>`;
+  const goal = m.role === 'liberal' ? 'Enact 5 Liberal policies or execute Hitler.' : m.role === 'hitler' ? 'Stay hidden. Get elected Chancellor after 3 Fascist policies, or enact 6.' : 'Enact 6 Fascist policies or get Hitler elected Chancellor after 3.';
+  r.className = 'reveal ' + m.role;
+  r.innerHTML = `<div class="head" style="opacity:.8">Secret role</div><img src="${ROLE_ART[m.role]}" alt=""><h1>${ROLE_NAME[m.role]}</h1>
+    <div class="head" style="opacity:.8">Party: ${m.party}</div>${team}<p style="max-width:300px;opacity:.9">${goal}</p><p style="opacity:.6;font-size:.85rem">Let go to hide</p>`;
+  r.style.display = 'flex';
+}
+function bindHold(el) {
+  const on = (e) => { e.preventDefault(); showRole(true); };
+  const off = () => showRole(false);
+  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+document.getElementById('reveal').addEventListener('pointerup', () => showRole(false));
+
+function renderGame() {
+  const g = S.game, m = S.mine, me = S.me;
+  const a = m.action || { type: 'wait' };
+  const key = a.type + ':' + (g.announce && g.announce.at);
+  if (key !== selKey) { sel = null; selKey = key; }
+  const myTurn = !['wait', 'vote', 'ready', 'dead', 'gameover'].includes(a.type) || (a.type === 'vote' && a.mine === null);
+  if (myTurn && key !== lastActionKey) { lastActionKey = key; if (navigator.vibrate) navigator.vibrate([120, 60, 120]); }
+
+  const top = `<div class="bar"><div class="me">${esc(me.name)}<small>Room ${esc(S.lobby.code)}${m.alive ? '' : ' · executed'}</small></div>
+    <div class="hold sm" id="holdSm">${ICON.lock} Hold for role</div></div>
+    <div class="status"><span>Liberal <b>${g.liberal}/5</b></span><span>Fascist <b>${g.fascist}/6</b></span><span>Tracker <b>${g.tracker}/3</b></span></div>`;
+  app.innerHTML = top + `<div id="act">${actionHtml(a, g)}</div>` + (me.isHost ? hostTools(g) : '');
+  bindHold(document.getElementById('holdSm'));
+  const big = document.getElementById('holdBig'); if (big) bindHold(big);
+  bindAction(a);
+  const ab = document.getElementById('abort'); if (ab) ab.onclick = () => { if (confirm('End this game for everyone?')) socket.emit('host:abort'); };
+  const lb = document.getElementById('toLobby'); if (lb) lb.onclick = () => socket.emit('host:lobby');
+  const ag = document.getElementById('again'); if (ag) ag.onclick = () => socket.emit('host:start');
+}
+
+function hostTools(g) {
+  if (g.phase === 'gameover') return `<div class="panel"><h2>Host</h2><button class="btn red" id="again">Play again (same seats)</button><button class="btn alt" id="toLobby">Back to lobby</button></div>`;
+  return `<button class="btn alt" id="abort" style="color:var(--muted);border-color:#4a443d;margin-top:24px">End game (host)</button>`;
+}
+
+function waitingText(g) {
+  const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
+  const t = { nominate: `${name(g.president)} is picking a Chancellor.`, president: `President ${name(g.president)} is discarding a policy. No talking!`,
+    chancellor: `Chancellor ${name(g.chancellor)} is enacting a policy. No talking!`, veto: `President ${name(g.president)} is deciding on the veto.`,
+    power: `President ${name(g.president)} is using a power: ${g.powerInfo ? g.powerInfo.name : ''}.`, powerResult: `${name(g.president)} is looking at the investigation.`,
+    voteResult: 'Votes are on the TV.', enacted: 'A policy was enacted — look at the TV.', executed: 'Someone was executed — look at the TV.' }[g.phase];
+  return t || (g.announce ? g.announce.text : '');
+}
+
+function cardsHtml(cards, cols, cls = '') {
+  return `<div class="cards" style="grid-template-columns:repeat(${cols},1fr)">${cards.map((c, i) => `<div data-card="${i}">${policyCard(c, (sel === i ? 'sel ' : '') + cls)}</div>`).join('')}</div>`;
+}
+
+function actionHtml(a, g) {
+  switch (a.type) {
+    case 'ready': return `<div class="panel center"><h2>Your secret role</h2><p class="muted">Cover your screen, then hold the button below. Don't show anyone.</p>
+      <div class="hold" id="holdBig" style="margin:14px 0">${ICON.lock}Hold to see your role</div>
+      ${a.done ? '<p class="muted">Waiting for everyone else…</p>' : '<button class="btn" id="ready">I\'m ready</button>'}</div>`;
+    case 'nominate': return `<div class="panel"><h2>You're the Presidential Candidate</h2><p class="muted">Nominate a Chancellor. Term-limited players aren't listed.</p>
+      <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+      <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>Nominate</button></div>`;
+    case 'vote': return `<div class="panel"><h2>Vote</h2><p><b>${esc(a.president)}</b> as President, <b>${esc(a.nominee)}</b> as Chancellor?</p>
+      ${g.fascist >= 3 ? '<p style="color:var(--fas);font-size:0.95rem">Careful: 3+ Fascist policies are enacted. If the Chancellor is Hitler, Fascists win.</p>' : ''}
+      <div class="ballots"><button class="ballot ja ${a.mine === true ? 'sel' : ''}" data-vote="1">Ja!<small>yes</small></button><button class="ballot nein ${a.mine === false ? 'sel' : ''}" data-vote="0">Nein<small>no</small></button></div>
+      <p class="muted center">${a.mine === null ? 'Votes are secret until everyone has voted.' : `You voted ${a.mine ? 'Ja' : 'Nein'}. You can change it until the last vote is in.`}</p></div>`;
+    case 'discard': return `<div class="panel"><h2>President: discard one</h2><p class="muted">You drew 3 policies. Tap one to <b>discard</b>. The other 2 go to the Chancellor. Stay silent.</p>
+      ${cardsHtml(a.cards, 3)}<button class="btn" id="confirm" ${sel === null ? 'disabled' : ''}>Discard selected</button></div>`;
+    case 'enact': return `<div class="panel"><h2>Chancellor: enact one</h2><p class="muted">Tap the policy to <b>enact</b>. The other is discarded. Stay silent.</p>
+      ${cardsHtml(a.cards, 2)}<button class="btn red" id="confirm" ${sel === null ? 'disabled' : ''}>Enact selected</button>
+      ${a.canVeto ? `<button class="btn alt" id="veto">${ICON.veto} Propose veto</button>` : ''}</div>`;
+    case 'vetoAnswer': return `<div class="panel"><h2>Veto requested</h2><p>Chancellor <b>${esc(a.chancellor)}</b> wants to veto this agenda. If you agree, both policies are discarded and the election tracker moves.</p>
+      ${cardsHtml(a.cards, 2)}<button class="btn" id="vyes">Agree to veto</button><button class="btn alt" id="vno">Refuse</button></div>`;
+    case 'peek': return `<div class="panel"><h2>Policy peek</h2><p class="muted">These are the next 3 policies, top one first. Remember them, then tap done. You may tell the truth or lie.</p>
+      ${a.cards.map((c) => c).length ? `<div class="cards" style="grid-template-columns:repeat(3,1fr)">${a.cards.map((c) => policyCard(c)).join('')}</div>` : ''}<p class="muted" style="margin-top:6px">← top of deck</p>
+      <button class="btn" id="confirm">Done</button></div>`;
+    case 'power': return `<div class="panel"><div class="big-ico">${ICON[a.power]}</div><h2 class="center">${esc(a.info.name)}</h2><p class="muted center">${esc(a.info.desc)}</p>
+      <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+      <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>${a.power === 'execute' ? 'Execute' : a.power === 'special' ? 'Make next President' : 'Investigate'}</button></div>`;
+    case 'investigation': return `<div class="panel center"><h2>${esc(a.name)} is…</h2><p class="muted">Party membership (this never shows who Hitler is).</p>
+      <div class="party" style="background:var(--${a.party === 'liberal' ? 'lib' : 'fas'})"><img src="${ROLE_ART[a.party]}" alt="">${a.party}</div>
+      <p class="muted">Only you saw this. You can share it or lie.</p><button class="btn" id="confirm">Done</button></div>`;
+    case 'dead': return `<div class="panel center"><div class="big-ico">${ICON.skull}</div><h2>You were executed</h2><p class="muted">You can't talk, vote, or run for office. Stay silent — don't reveal your role!</p></div>`;
+    case 'gameover': return `<div class="panel center" style="background:var(--${a.winner === 'liberal' ? 'lib' : 'fas'});color:var(--paper)"><img src="/art/${a.winner}.svg" style="width:90px" alt=""><h2 style="font-size:1.8rem">${a.winner === 'liberal' ? 'Liberals' : 'Fascists'} win</h2><p>${esc(a.reason)}</p>
+      <p class="head">${(S.mine.party === a.winner) ? 'You won!' : 'You lost.'}</p></div>`;
+    default: return `<div class="panel center"><h2>${esc(g.announce ? g.announce.title : 'Waiting')}</h2><p class="muted">${esc(waitingText(g))}</p>
+      <div class="hold" id="holdBig" style="margin-top:14px">${ICON.lock}Hold to see your role</div></div>`;
+  }
+}
+
+function bindAction(a) {
+  const $ = (id) => document.getElementById(id);
+  app.querySelectorAll('[data-opt]').forEach((b) => b.onclick = () => { sel = b.dataset.opt; renderGame(); });
+  app.querySelectorAll('[data-card]').forEach((b) => b.onclick = () => { if (a.type === 'discard' || a.type === 'enact') { sel = Number(b.dataset.card); renderGame(); } });
+  app.querySelectorAll('[data-vote]').forEach((b) => b.onclick = () => socket.emit('vote', b.dataset.vote === '1'));
+  if ($('ready')) $('ready').onclick = () => socket.emit('ready');
+  if ($('veto')) $('veto').onclick = () => socket.emit('veto');
+  if ($('vyes')) $('vyes').onclick = () => socket.emit('vetoAnswer', true);
+  if ($('vno')) $('vno').onclick = () => socket.emit('vetoAnswer', false);
+  const c = $('confirm');
+  if (c) c.onclick = () => {
+    if (a.type === 'nominate' && sel) socket.emit('nominate', sel);
+    if (a.type === 'discard' && sel !== null) socket.emit('discard', sel);
+    if (a.type === 'enact' && sel !== null) socket.emit('enact', sel);
+    if (a.type === 'peek') socket.emit('power', null);
+    if (a.type === 'power' && sel) {
+      if (a.power === 'execute' && !confirm('Execute ' + a.options.find((o) => o.id === sel).name + '? This can\'t be undone.')) return;
+      socket.emit('power', sel);
+    }
+    if (a.type === 'investigation') socket.emit('investigationDone');
+  };
+}
+render();
+</script>
+</body>
+</html>
