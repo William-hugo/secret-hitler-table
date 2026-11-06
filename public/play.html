@@ -56,6 +56,11 @@
   @keyframes rflip { from { transform: perspective(800px) rotateY(80deg); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes pop { 0% { transform: scale(.94); opacity: 0; } 100% { transform: none; opacity: 1; } }
   #act.fresh > .panel { animation: pop .25s ease both; }
+  .gcard { background: #2b2621; color: var(--paper); border-radius: 14px; padding: 16px; font-size: 9px; overflow: hidden; animation: pop .3s ease both; }
+  .gcard h2 { font-size: 1.5rem; color: #fff; margin-bottom: 8px; } .gcard .gstep { font-size: .75rem; color: var(--muted); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .gcard ol { padding-left: 20px; margin: 8px 0 12px; font-size: 15px; line-height: 1.5; } .gcard li { margin-bottom: 6px; }
+  .gcard .gvis { margin: 10px 0 4px; overflow: hidden; } .gcard .gfan img { width: 7em; } .gcard .gboards img { width: 34em; } .gcard .gtable { font-size: 13px; }
+  .gcard .gnav { display: flex; gap: 8px; } .gcard .gnav .btn { margin-top: 0; padding: 11px; }
   img { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
   .hold, .hold *, .reveal, .reveal * { -webkit-touch-callout: none; touch-action: none; }
   .hold img, .reveal img { pointer-events: none; }
@@ -82,6 +87,7 @@
 <div id="reveal" class="reveal" style="display:none"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/common.js"></script>
+<script src="/guide.js"></script>
 <script>
 const socket = io();
 const app = document.getElementById('app');
@@ -137,8 +143,16 @@ function renderJoin() {
 function renderLobby() {
   const L = S.lobby, me = S.me;
   const n = L.players.length;
+  let guide = '';
+  if (L.guide && L.guide.on) {
+    const slides = guideSlides(n), i = Math.min(L.guide.i, slides.length - 1), sl = slides[i];
+    guide = `<div class="gcard"><div class="gstep">How to play · ${i + 1} / ${slides.length}</div><h2>${esc(sl.title)}</h2><div class="gvis">${sl.visual}</div><ol>${sl.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ol>
+      ${me.isHost ? `<div class="gnav"><button class="btn alt" style="color:var(--paper);border-color:#5a5248" data-g="${Math.max(0, i - 1)}">← Back</button>${i < slides.length - 1 ? `<button class="btn red" data-g="${i + 1}">Next →</button>` : `<button class="btn red" data-g="close">Done</button>`}</div>` : '<p style="color:var(--muted);font-size:13px;margin:0">Follow along on the TV.</p>'}</div>`;
+  }
   app.innerHTML = `
     <div class="bar"><div class="me">${esc(me.name)}<small>Room ${esc(L.code)}${me.isHost ? ' · you are the host' : ''}</small></div></div>
+    ${guide}
+    ${me.isHost && !(L.guide && L.guide.on) ? '<button class="btn alt" id="openGuide" style="color:var(--paper);border-color:#5a5248;margin-top:0">📖 Show "How to play" on the TV</button>' : ''}
     <div class="panel">
       <h2>You're in</h2>
       <p class="muted">${n}/10 players. ${n < 5 ? `Waiting for ${5 - n} more.` : 'Ready when the host is.'} Look at the TV.</p>
@@ -150,6 +164,8 @@ function renderLobby() {
       ${me.isHost ? `<button class="btn red" id="start" ${n < 5 ? 'disabled' : ''}>Start game</button>` : ''}
       <button class="btn alt" id="leave">Leave room</button>
     </div>`;
+  app.querySelectorAll('[data-g]').forEach((b) => b.onclick = () => socket.emit('host:guide', b.dataset.g === 'close' ? 'close' : Number(b.dataset.g)));
+  const og = document.getElementById('openGuide'); if (og) og.onclick = () => socket.emit('host:guide', (L.guide && L.guide.i) || 0);
   app.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => socket.emit('host:move', b.dataset.mv, Number(b.dataset.d)));
   app.querySelectorAll('[data-kick]').forEach((b) => b.onclick = () => socket.emit('host:kick', b.dataset.kick));
   app.querySelectorAll('[data-host]').forEach((b) => b.onclick = () => { if (confirm('Make ' + L.players.find((p) => p.id === b.dataset.host).name + ' the host?')) socket.emit('host:makeHost', b.dataset.host); });

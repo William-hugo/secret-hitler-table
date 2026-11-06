@@ -27,3 +27,31 @@ svg { width: 1em; height: 1em; vertical-align: -0.12em; }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--fas); color: var(--paper);
   padding: 12px 18px; border-radius: 8px; font-family: var(--head); letter-spacing: 0.04em; z-index: 99; max-width: 90vw; text-align: center; }
+
+/* how-to-play slides */
+.gvis { display: flex; justify-content: center; align-items: center; }
+.gvis img { display: block; }
+.gfan { display: flex; gap: 1em; justify-content: center; align-items: flex-end; }
+.gfan img { width: 9em; border-radius: 0.5em; filter: drop-shadow(0 0.4em 0.6em rgba(0,0,0,.45)); animation: gin .6s ease both; }
+.gfan img:nth-child(2) { animation-delay: .15s; } .gfan img:nth-child(3) { animation-delay: .3s; }
+.gboards { display: flex; flex-direction: column; gap: .6em; } .gboards img { width: 30em; filter: drop-shadow(0 .3em .5em rgba(0,0,0,.4)); animation: gin .6s ease both; } .gboards img:nth-child(2) { animation-delay: .2s; }
+.gdeck { display: flex; flex-wrap: wrap; width: 30em; gap: .4em; justify-content: center; } .gdeck img { width: 3.4em; animation: gin .4s ease both; }
+.gdeck img:nth-child(n+7) { animation-delay: .4s; }
+.gwide { width: 32em; filter: drop-shadow(0 .3em .5em rgba(0,0,0,.4)); }
+.gtable { border-collapse: collapse; font-size: 1.3em; color: var(--paper); }
+.gtable th, .gtable td { padding: .35em .7em; text-align: center; border-bottom: 1px solid rgba(255,255,255,.12); }
+.gtable th:first-child, .gtable td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+.gtable .hl { background: var(--gold); color: var(--ink); font-weight: 700; }
+.gplac { display: flex; flex-direction: column; gap: .8em; }
+.gp { font-family: var(--head); font-size: 2.4em; padding: .3em 1em; border-radius: .3em; text-align: center; animation: gin .6s ease both; }
+.gp.pres { background: var(--gold); color: var(--ink); } .gp.chan { background: var(--paper); color: var(--ink); animation-delay: .2s; }
+.gp.talk { background: #3b7d3a; color: #fff; } .gp.quiet { background: #b02a1a; color: #fff; animation-delay: .2s; }
+.gleg { display: flex; align-items: center; gap: .8em; } .gleg div { display: flex; gap: .3em; } .gleg img { width: 4.6em; } .gleg span { font-size: 2.4em; color: var(--gold); }
+.gleg .gout, .gleg .gout2 { animation: gout 2.4s ease-in-out infinite; } .gleg .gout2 { animation-delay: 1.2s; }
+.gpows { display: grid; grid-template-columns: 1fr 1fr; gap: .8em 1.4em; }
+.gpow { display: grid; grid-template-columns: 4em 1fr; grid-template-rows: auto auto; column-gap: .7em; align-items: center; }
+.gpow img { grid-row: span 2; width: 4em; border-radius: .3em; } .gpow b { font-family: var(--head); font-weight: 400; font-size: 1.4em; color: #fff; } .gpow span { color: var(--paper-2); font-size: .95em; }
+.gnight { width: 14em; height: 14em; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #1c2733, #0b0e12 70%); display: flex; align-items: center; justify-content: center; }
+.gmoon { width: 6em; height: 6em; border-radius: 50%; box-shadow: 1.2em .7em 0 0 #e9e2c8; transform: translateX(-1em); }
+@keyframes gin { from { opacity: 0; transform: translateY(1em) scale(.95); } to { opacity: 1; transform: none; } }
+@keyframes gout { 0%,30% { opacity: 1; transform: none; } 55%,100% { opacity: .15; transform: translateY(1.2em) rotate(12deg); } }

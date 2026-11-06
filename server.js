@@ -80,7 +80,7 @@ function makeCode() {
 function createRoom(base) {
   if (rooms.size >= 500) for (const [c, r] of rooms) if (r.players.every((p) => p.sockets.size === 0)) { rooms.delete(c); break; }
   const code = makeCode();
-  const room = { code, base, players: [], hostId: null, options: { classic: false }, game: null, timer: null, created: Date.now() };
+  const room = { code, base, players: [], hostId: null, options: { classic: false }, guide: { on: false, i: 0 }, game: null, timer: null, created: Date.now() };
   rooms.set(code, room);
   return room;
 }
@@ -93,6 +93,7 @@ function lobbyView(room) {
     players: room.players.map((p) => ({ id: p.id, name: p.name, bot: !!p.bot, connected: p.bot || p.sockets.size > 0 })),
     inGame: !!room.game,
     options: room.options,
+    guide: room.guide,
   };
 }
 
@@ -119,6 +120,7 @@ const HOST_OPS = {
     if (room.game && room.game.phase !== 'gameover') return 'A game is already running.';
     if (room.players.length < 5) return 'You need at least 5 players.';
     room.game = new Game(room.players.map((p) => ({ id: p.id, name: p.name })), { classic: room.options.classic });
+    room.guide = { on: false, i: 0 };
   },
   move(room, id, dir) {
     if (room.game) return;
@@ -152,6 +154,11 @@ const HOST_OPS = {
     room.game = null;
   },
   abort(room) { clearTimeout(room.timer); room.game = null; },
+  // How-to-play slides: 'close', or a slide number to show
+  guide(room, val) {
+    if (val === 'close') room.guide = { on: false, i: room.guide.i };
+    else room.guide = { on: true, i: Math.max(0, Math.min(30, Number(val) || 0)) };
+  },
 };
 
 // ---- practice bots: random players so you can try the game with fewer people ----
