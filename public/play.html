@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1d1a17">
 <title>Secret Hitler — player</title>
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/style.css">
 <style>
   body { font-size: 17px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -53,7 +55,15 @@
   .flipcard { display: flex; flex-direction: column; align-items: center; gap: 8px; animation: rflip .45s ease both; }
   @keyframes rflip { from { transform: perspective(800px) rotateY(80deg); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes pop { 0% { transform: scale(.94); opacity: 0; } 100% { transform: none; opacity: 1; } }
-  #act > .panel { animation: pop .25s ease both; }
+  #act.fresh > .panel { animation: pop .25s ease both; }
+  img { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
+  .hold, .hold *, .reveal, .reveal * { -webkit-touch-callout: none; touch-action: none; }
+  .hold img, .reveal img { pointer-events: none; }
+  .moodbar { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 8px 12px; color: #fff; font-family: var(--head); font-size: 1.25rem; }
+  .moodbar small { font-family: var(--body); font-size: .78rem; font-weight: 600; opacity: .9; margin-left: auto; text-align: right; }
+  .moodbar.talk { background: #3b7d3a; } .moodbar.quiet { background: #b02a1a; animation: qp 2s ease-in-out infinite; }
+  .moodbar.swap { animation: pop .5s ease both; }
+  @keyframes qp { 0%,100% { box-shadow: 0 0 0 0 rgba(224,91,43,0); } 50% { box-shadow: 0 0 14px 3px rgba(224,91,43,.7); } }
   .status { display: flex; gap: 8px; justify-content: space-between; font-family: var(--head); font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
   .status b { color: var(--paper); }
   .party { width: 62%; margin: 12px auto; display: block; border-radius: 12px; animation: rflip .5s ease both; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
@@ -77,6 +87,7 @@ const socket = io();
 const app = document.getElementById('app');
 const params = new URLSearchParams(location.search);
 let code = (params.get('room') || localStorage.getItem('sh-room') || '').toUpperCase();
+let lastHtml = null, lastRenderKey = null, lastMood = null;
 let S = null, joined = false, sel = null, selKey = null, lastActionKey = null, joinErr = '';
 
 function tokenFor(c) { return localStorage.getItem('sh-token-' + c); }
@@ -104,8 +115,8 @@ function doJoin() {
 }
 
 function render() {
-  if (!joined || !S || !S.me) return renderJoin();
-  if (!S.game) return renderLobby();
+  if (!joined || !S || !S.me) { lastHtml = null; return renderJoin(); }
+  if (!S.game) { lastHtml = null; return renderLobby(); }
   renderGame();
 }
 
@@ -177,13 +188,19 @@ function showRole(on) {
     <h1>${ROLE_NAME[m.role]}</h1>${team}<p style="max-width:320px;opacity:.9;margin:4px auto;font-size:.9rem">${goal}</p><p style="opacity:.6;font-size:.8rem;margin:0">Let go to hide</p></div>`;
   r.style.display = 'flex';
 }
+// Hold-to-reveal: show while a finger/mouse is down, hide on release anywhere.
+let holding = false;
 function bindHold(el) {
-  const on = (e) => { e.preventDefault(); showRole(true); };
-  const off = () => showRole(false);
-  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
+  const on = (e) => { e.preventDefault(); holding = true; showRole(true); };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
-document.getElementById('reveal').addEventListener('pointerup', () => showRole(false));
+const release = () => { if (holding) { holding = false; showRole(false); } };
+['pointerup', 'pointercancel', 'touchend', 'touchcancel', 'blur'].forEach((ev) => window.addEventListener(ev, release));
+// Long-pressing on a phone would otherwise open the browser's "save image / copy" menu.
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('selectstart', (e) => { if (!e.target.closest('input')) e.preventDefault(); });
 
 function renderGame() {
   const g = S.game, m = S.mine, me = S.me;
@@ -193,10 +210,18 @@ function renderGame() {
   const myTurn = !['wait', 'vote', 'ready', 'dead', 'gameover'].includes(a.type) || (a.type === 'vote' && a.mine === null);
   if (myTurn && key !== lastActionKey) { lastActionKey = key; if (navigator.vibrate) navigator.vibrate([120, 60, 120]); }
 
+  const q = { roles: 'Look at your role in secret', night: 'Eyes closed, no talking', president: 'The government may not talk', chancellor: 'The government may not talk', veto: 'The government may not talk' }[g.phase];
+  const mood = q ? 'quiet' : 'talk';
   const top = `<div class="bar"><div class="me">${esc(me.name)}<small>Room ${esc(S.lobby.code)}${m.alive ? '' : ' · executed'}</small></div>
     <div class="hold sm" id="holdSm">${ICON.lock} Hold for role</div></div>
+    <div class="moodbar ${mood} ${lastMood && lastMood !== mood ? 'swap' : ''}">${q ? '🤫 Quiet time' : '💬 Talk time'}<small>${q || 'Discuss openly'}</small></div>
     <div class="status"><span>Liberal <b>${g.liberal}/5</b></span><span>Fascist <b>${g.fascist}/6</b></span><span>Tracker <b>${g.tracker}/3</b></span></div>`;
-  app.innerHTML = top + `<div id="act">${actionHtml(a, g)}</div>` + (me.isHost ? hostTools(g) : '');
+  const html = top + `<div id="act" class="${key !== lastRenderKey ? 'fresh' : ''}">${actionHtml(a, g)}</div>` + (me.isHost ? hostTools(g) : '');
+  // Skip redrawing when nothing on this phone changed (stops flicker when others vote).
+  const cmp = html.replace(' swap', '').replace('class="fresh"', 'class=""');
+  if (cmp === lastHtml) return;
+  lastHtml = cmp; lastRenderKey = key; lastMood = mood;
+  app.innerHTML = html;
   bindHold(document.getElementById('holdSm'));
   const big = document.getElementById('holdBig'); if (big) bindHold(big);
   bindAction(a);

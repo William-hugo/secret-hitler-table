@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Secret Hitler — TV board</title>
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/style.css">
 <style>
   html { font-size: min(1.04vw, 1.85vh); }
@@ -50,7 +52,7 @@
   .log div { padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); line-height: 1.35; }
   .log div:first-child { color: #fff; font-weight: 600; }
   /* official boards */
-  .boards { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; min-height: 0; height: 100%; }
+  .boards { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; min-height: 0; height: 100%; width: 100%; }
   .board { position: relative; height: calc(50% - 0.4rem); aspect-ratio: 1683 / 650; max-width: 100%; }
   .board > img.bg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0.4rem 0.6rem rgba(0,0,0,0.45)); }
   .tile { position: absolute; width: 10%; top: 30%; }
@@ -115,6 +117,24 @@
   @keyframes slidein { from { transform: translateY(-0.8rem); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-0.8rem); } }
+  .ov.stay, .ov.stay h1, .ov.stay .ballot img, .ov.stay .rcard, .ov.stay .bigcard, .ov.stay .vict, .ov.stay .tally { animation: none !important; opacity: 1; }
+  .seat .voted.old { animation: none; }
+  /* talk / quiet indicator */
+  .mood { display: flex; align-items: center; gap: 0.8rem; border-radius: 0.6rem; padding: 0.5rem 1.2rem; min-width: 19rem; color: #fff; transition: background 0.4s; }
+  .mood .ic { font-size: 3.2rem; line-height: 1; }
+  .mood b { display: block; font-family: var(--head); font-weight: 400; font-size: 2.6rem; line-height: 1; }
+  .mood small { display: block; font-size: 0.8rem; font-weight: 600; opacity: 0.9; margin-top: 0.15rem; max-width: 13rem; }
+  .mood.talk { background: #3b7d3a; border-bottom: 0.3rem solid #2a5c29; }
+  .mood.quiet { background: #b02a1a; border-bottom: 0.3rem solid #7a1a0e; animation: quietpulse 2s ease-in-out infinite; }
+  .mood.swap { animation: moodswap 0.7s ease both; }
+  .mood.quiet.swap { animation: moodswap 0.7s ease both, quietpulse 2s ease-in-out 0.7s infinite; }
+  @keyframes quietpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(224,91,43,0); } 50% { box-shadow: 0 0 1.2rem 0.3rem rgba(224,91,43,0.7); } }
+  @keyframes moodswap { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: none; opacity: 1; } }
+  .power { display: flex; gap: 2.5rem; align-items: center; text-align: left; }
+  .power img { width: 17rem; border-radius: 0.8rem; box-shadow: 0 0 0 0.4rem #b02a1a, 0 1rem 2rem rgba(0,0,0,0.5); animation: drop 0.9s cubic-bezier(.2,.9,.3,1.25) both; }
+  .power .kicker { font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); font-size: 1.1rem; }
+  .power h1 { font-size: 4.6rem; }
+  .power p { max-width: 36rem; }
   /* lobby */
   .lobby { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
   .join { background: var(--paper); color: var(--ink); border-radius: 1rem; padding: 1.6rem 2rem; text-align: center; animation: slidein 0.5s ease both; }
@@ -159,7 +179,6 @@ function connect() {
 }
 socket.on('connect', connect);
 socket.on('state', (s) => { S = s; render(); speak(); sound(); shuffleFx(); nightAudio(); });
-setInterval(() => { const t = document.getElementById('talktime'); if (t && S && S.game && S.game.announce) t.textContent = clock(Date.now() - S.game.announce.at); }, 1000);
 function clock(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
 document.getElementById('fs').onclick = () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
@@ -259,11 +278,17 @@ function shuffleFx() {
 }
 
 // ---------- rendering ----------
+// Only the parts of the screen that actually changed are redrawn, so nothing flickers.
+let mode = null, cache = {};
+function setMode(m, skeleton) { if (mode !== m) { mode = m; cache = {}; app.innerHTML = skeleton; } }
+function setRegion(id, html) { if (cache[id] === html) return false; cache[id] = html; document.getElementById(id).innerHTML = html; return true; }
 function render() {
-  if (!info) { app.innerHTML = '<div class="ov"><h1>Connecting…</h1><p>If the site was asleep, this can take up to a minute.</p></div>'; return; }
+  if (!info) { setMode('connecting', '<div class="ov"><h1>Connecting…</h1><p>If the site was asleep, this can take up to a minute.</p></div>'); return; }
   if (!S || !S.game) { prev.lib = prev.fas = null; renderLobby(); }
   else renderGame(S.game);
-  if (!audioUnlocked) app.insertAdjacentHTML('beforeend', '<button class="btn unlock" onclick="unlockAudio()">Click once to turn on sound and narration</button>');
+  const ub = document.getElementById('unlockbtn');
+  if (!audioUnlocked && !ub) document.body.insertAdjacentHTML('beforeend', '<button id="unlockbtn" class="btn unlock" onclick="unlockAudio()">Click once to turn on sound and narration</button>');
+  if (audioUnlocked && ub) ub.remove();
 }
 
 function roleCounts(n) {
@@ -271,31 +296,37 @@ function roleCounts(n) {
   return t ? `${t[0]} Liberals, ${t[1]} Fascist${t[1] > 1 ? 's' : ''} + Hitler. ${n <= 6 ? 'Hitler will know who the Fascist is.' : 'Hitler will NOT know who the Fascists are.'}` : '';
 }
 
+let lobbyIds = null;
 function renderLobby() {
   const L = S ? S.lobby : { players: [], options: {} };
   const n = L.players.length;
-  app.innerHTML = `
-  <div class="lobby">
-    <div class="join">
+  const ids = L.players.map((p) => p.id);
+  const old = lobbyIds || ids;
+  if (lobbyIds) {
+    const joined = L.players.filter((p) => !lobbyIds.includes(p.id));
+    if (joined.length) { tone([523, 659, 784, 1047], 0.09); if (soundOn && audioUnlocked) say(joined.map((p) => p.name.replace(' (bot)', '')).join(' and ') + ' joined the game'); }
+    else if (ids.length < lobbyIds.length) tone([440, 330], 0.12);
+  }
+  lobbyIds = ids;
+  setMode('lobby', '<div class="lobby" style="flex:1"><div id="r-join"></div><div id="r-players"></div></div>');
+  setRegion('r-join', `<div class="join">
       <div class="trio"><img src="/assets/role-liberal-2.png" alt=""><img src="/assets/role-hitler.png" alt=""><img src="/assets/role-fascist-1.png" alt=""></div>
       <h2 style="font-size:2rem">Scan to join</h2>
       <img class="qr" src="${info.qr}" alt="QR code to join">
       <div class="url">${esc(info.base)}/play</div>
       <div class="bigcode">${esc(info.code)}</div>
-    </div>
-    <div>
+    </div>`);
+  setRegion('r-players', `
       <h1 style="font-size:3.4rem;color:#fff;margin-bottom:0.6rem">Secret Hitler</h1>
       <h2 style="font-size:1.8rem;color:var(--paper-2);margin-bottom:0.8rem">Players · ${n}/10</h2>
       <div class="lob-list">
-        ${L.players.map((p, i) => `<div class="seat ${p.connected ? '' : 'off'}"><span class="no">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}</div>`).join('') || '<div class="hint">Waiting for players…</div>'}
+        ${L.players.map((p, i) => `<div class="seat ${p.connected ? '' : 'off'}" style="${old.includes(p.id) && cache['r-players'] ? 'animation:none' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}</div>`).join('') || '<div class="hint">Waiting for players…</div>'}
       </div>
       <div class="hint">
         ${n >= 5 ? `<b style="color:var(--paper)">${roleCounts(n)}</b><br>` : `Need ${5 - n} more player${5 - n === 1 ? '' : 's'} (5–10). `}
         Sit around the table and join in seating order, going clockwise — the presidency passes in this order. Your phone is your secret role card, your ballot and your policy hand.<br>
         <b style="color:var(--paper)">Night phase:</b> ${L.options && L.options.classic ? 'Classic — phones don\'t show teams; Fascists find each other with eyes closed, like the board game.' : 'Phones show each Fascist their team, and the narrator still runs the eyes-closed ritual.'}
-      </div>
-    </div>
-  </div>`;
+      </div>`);
 }
 
 const LIB_X = (i) => 18.2 + i * 13.54, FAS_X = (i) => 11 + i * 13.6;
@@ -314,48 +345,49 @@ function boardsHtml(g) {
   </div>`;
 }
 
-function talkLine(g) {
-  const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
-  if (g.phase === 'nominate') {
-    const claim = g.lastGov ? `${esc(name(g.lastGov.president))} and ${esc(name(g.lastGov.chancellor))}: what policies did you see?` : 'Who do you trust? Who should be Chancellor?';
-    return `<div class="talk"><b>Table talk</b> ${claim} <span id="talktime" style="margin-left:auto">${clock(Date.now() - g.announce.at)}</span></div>`;
-  }
-  if (g.phase === 'vote') return `<div class="talk"><b>Table talk</b> Argue for or against this government before the last vote is in.</div>`;
-  if (g.phase === 'president' || g.phase === 'chancellor') return `<div class="talk"><b>Silence</b> No talking while the government passes policies.</div>`;
-  return '';
+const QUIET = { roles: ['Quiet time', 'Look at your role in secret'], night: ['Quiet time', 'Eyes closed, no talking'], president: ['Quiet time', 'The government may not talk or signal'], chancellor: ['Quiet time', 'The government may not talk or signal'], veto: ['Quiet time', 'The government may not talk or signal'] };
+function moodHtml(g) {
+  const q = QUIET[g.phase];
+  if (q) return { key: 'quiet', html: `<div class="ic">🤫</div><div><b>${q[0]}</b><small>${q[1]}</small></div>` };
+  const sub = { nominate: 'Debate who should be Chancellor', vote: 'Argue before the last vote is in', power: 'Lobby the President', powerResult: 'Ask what they saw', enacted: 'Claims and accusations', voteResult: 'React to the vote', executed: 'The dead stay silent', gameover: 'Good game!' }[g.phase] || 'Discuss openly';
+  return { key: 'talk', html: `<div class="ic">💬</div><div><b>Talk time</b><small>${sub}</small></div>` };
 }
-
+let lastMood = null;
+const GAME_SKELETON = `<div class="top"><div class="mood" id="r-mood"></div><div id="r-banner" style="flex:1;display:flex"></div><div id="r-gov" style="display:flex;gap:1rem"></div></div>
+  <div class="main"><div class="side" id="r-left"></div><div id="r-boards" style="min-height:0;height:100%"></div><div class="side" id="r-right"></div></div>
+  <div class="seats" id="r-seats"></div><div id="r-ov"></div>`;
+let prevVoted = new Set(), ovKey = null;
 function renderGame(g) {
+  setMode('game', GAME_SKELETON);
   const L = S.lobby;
   const a = g.announce || { title: '', text: '' };
   const conn = Object.fromEntries(L.players.map((p) => [p.id, p.connected]));
   const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
+  // talk / quiet indicator
+  const m = moodHtml(g);
+  const moodEl = document.getElementById('r-mood');
+  if (setRegion('r-mood', m.html) || moodEl.className.indexOf(m.key) < 0) {
+    const changed = lastMood !== null && lastMood !== m.key;
+    moodEl.className = 'mood ' + m.key + (changed ? ' swap' : '');
+    if (changed) tone(m.key === 'quiet' ? [880, 660, 440] : [440, 660, 880], 0.12);
+    lastMood = m.key;
+  }
+  setRegion('r-banner', `<div class="banner ${a.tone || ''} ${prev.bannerAt !== a.at ? 'anim' : ''}" style="flex:1"><h2>${esc(a.title)}</h2>${a.text ? `<p>${esc(a.text)}</p>` : ''}</div>`);
   const chan = g.chancellor ? `<div class="g chan"><small>${ICON.gavel} Chancellor</small><b>${esc(name(g.chancellor))}</b></div>`
     : g.nominee ? `<div class="g chan nom"><small>${ICON.gavel} Nominee</small><b>${esc(name(g.nominee))}</b></div>`
     : `<div class="g chan empty"><small>${ICON.gavel} Chancellor</small><b>—</b></div>`;
-  const shownVotes = g.phase !== 'vote' && g.lastVote ? g.lastVote.votes : (g.recentVotes || null);
-  app.innerHTML = `
-  <div class="top">
-    <div class="banner ${a.tone || ''} ${prev.bannerAt !== a.at ? 'anim' : ''}"><h2>${esc(a.title)}</h2>${a.text ? `<p>${esc(a.text)}</p>` : ''}${talkLine(g)}</div>
-    <div class="gov"><div class="g pres"><small>${ICON.crown} President</small><b>${esc(name(g.president))}</b></div>${chan}</div>
-    <div class="code">Room<b>${esc(L.code)}</b></div>
-  </div>
-  <div class="main">
-    <div class="side">
+  setRegion('r-gov', `<div class="gov"><div class="g pres"><small>${ICON.crown} President</small><b>${esc(name(g.president))}</b></div>${chan}</div><div class="code">Room<b>${esc(L.code)}</b></div>`);
+  setRegion('r-left', `
       <div class="box"><div class="pile"><img src="/assets/board-draw.png" alt="Draw pile"><b>${g.deck}</b></div></div>
       <div class="box"><div class="pile"><img src="/assets/board-discard.png" alt="Discard pile"><b style="color:#fff;text-shadow:none">${g.discard}</b></div></div>
       <div class="box tcall"><h4>Election tracker</h4><div class="n">${g.tracker} / 3</div>
         <div class="dots">${[1, 2, 3].map((i) => `<i class="${g.tracker >= i ? 'on' : ''} ${i === 3 ? 'chaos' : ''}"></i>`).join('')}</div>
-        ${g.tracker === 2 ? '<div class="warn">One more fail = chaos!</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted.</div>'}</div>
-    </div>
-    ${boardsHtml(g)}
-    <div class="side">
-      <div class="box log"><h4>History</h4>${g.log.slice().reverse().slice(0, 7).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
-    </div>
-  </div>
-  <div class="seats">
-    ${g.players.map((p, i) => `<div class="seat ${p.alive ? '' : 'dead'} ${p.isPresident ? 'pres' : ''} ${p.isChancellor ? 'chan' : ''} ${p.isNominee && !p.isChancellor ? 'nom' : ''} ${conn[p.id] === false ? 'off' : ''}">
-      ${p.voted || p.ready ? `<span class="voted">${ICON.check}</span>` : ''}
+        ${g.tracker === 2 ? '<div class="warn">One more fail = chaos!</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted.</div>'}</div>`);
+  setRegion('r-boards', boardsHtml(g));
+  setRegion('r-right', `<div class="box log"><h4>History</h4>${g.log.slice().reverse().slice(0, 7).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`);
+  const nowVoted = new Set(g.players.filter((p) => p.voted || p.ready).map((p) => p.id));
+  setRegion('r-seats', g.players.map((p, i) => `<div class="seat ${p.alive ? '' : 'dead'} ${p.isPresident ? 'pres' : ''} ${p.isChancellor ? 'chan' : ''} ${p.isNominee && !p.isChancellor ? 'nom' : ''} ${conn[p.id] === false ? 'off' : ''}">
+      ${nowVoted.has(p.id) ? `<span class="voted ${prevVoted.has(p.id) ? 'old' : ''}">${ICON.check}</span>` : ''}
       ${g.phase !== 'vote' && g.recentVotes && p.id in g.recentVotes ? `<img class="vote" src="/assets/player-icon-${g.recentVotes[p.id] ? 'ja' : 'nein'}.png" alt="${g.recentVotes[p.id] ? 'Ja' : 'Nein'}">` : ''}
       <span class="no">Seat ${i + 1}</span><span class="nm">${esc(p.name)}</span>
       <div class="tags">
@@ -365,9 +397,15 @@ function renderGame(g) {
         ${p.termLimited && p.alive && !p.isChancellor && !p.isPresident ? `<span class="tag t">${ICON.lock} Term-limited</span>` : ''}
         ${p.notHitler && p.alive ? `<span class="tag s">${ICON.shield} Not Hitler</span>` : ''}
         ${!p.alive ? `<span class="tag b">${ICON.skull} Executed</span>` : ''}
-      </div></div>`).join('')}
-  </div>
-  ${overlay(g)}`;
+      </div></div>`).join(''));
+  prevVoted = nowVoted;
+  // overlays: animate only when a new overlay appears
+  const ov = overlay(g);
+  const key = g.phase + ':' + a.at;
+  const html = ov ? ov.replace('<div class="ov', `<div class="ov ${key === ovKey ? 'stay' : ''}`) : '';
+  if (ov && key === ovKey && cache['r-ov'] && cache['r-ov'].replace(/ov stay/, 'ov ') === html.replace(/ov stay/, 'ov ')) { /* unchanged */ }
+  else setRegion('r-ov', html);
+  ovKey = ov ? key : null;
   prev.lib = g.liberal; prev.fas = g.fascist; prev.bannerAt = a.at;
 }
 
@@ -396,7 +434,19 @@ function overlay(g) {
   if (g.phase === 'enacted' && g.lastEnacted) {
     const e = g.lastEnacted;
     return `<div class="ov"><h1>${e.byChaos ? 'Chaos!' : (e.policy === 'L' ? 'Liberal' : 'Fascist') + ' policy enacted'}</h1>${policyCard(e.policy, 'bigcard')}
-      <p>${esc(g.announce.text || '')}</p></div>`;
+      <p>${g.power ? `This slot on the Fascist board has a presidential power: <b style="color:var(--gold)">${esc(g.powerInfo.name)}</b>. It comes next…` : esc(g.announce.text || '')}</p></div>`;
+  }
+  if (g.phase === 'power' && g.power) {
+    const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
+    const how = { investigate: 'They will secretly see one player\'s party membership card.', special: 'They choose who will be the next Presidential Candidate.', peek: 'They secretly look at the top three policies of the draw pile.', execute: 'They must choose a player to kill. If it is Hitler, the Liberals win.' }[g.power];
+    return `<div class="ov"><div class="power"><img src="/assets/power-${g.power}.png" alt=""><div>
+      <div class="kicker">Presidential power unlocked</div><h1>${esc(g.powerInfo.name)}</h1>
+      <p>The Fascist policy just enacted gives President <b style="color:#fff">${esc(name(g.president))}</b> a power. ${how}</p>
+      <p style="margin-top:1rem;color:var(--gold);font-weight:600">${esc(name(g.president))}, use it on your phone now.${g.fascist === 5 ? ' Veto power is now unlocked too.' : ''}</p></div></div></div>`;
+  }
+  if (g.phase === 'powerResult') {
+    return `<div class="ov"><div class="power"><img src="/assets/power-investigate.png" alt=""><div>
+      <div class="kicker">Investigate loyalty</div><h1>Investigation</h1><p>${esc(g.announce.text)} Only the President sees the result. They may tell the truth, or lie.</p></div></div></div>`;
   }
   if (g.phase === 'executed') {
     return `<div class="ov"><img src="/assets/player-icon-hitler.png" style="width:9rem;animation:popdot .8s ease both" alt=""><h1>${esc(g.announce.title)}</h1><p>${esc(g.announce.text)}</p></div>`;
