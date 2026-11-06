@@ -32,7 +32,7 @@
   .code { text-align: center; color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; flex-direction: column; justify-content: center; }
   .code b { display: block; color: var(--paper); font-family: var(--head); font-weight: 400; font-size: 2rem; letter-spacing: 0.15em; }
   /* main */
-  .main { flex: 1; display: grid; grid-template-columns: 12rem minmax(0, 1fr) 15rem; gap: 1rem; min-height: 0; }
+  .main { flex: 1; display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 1rem; min-height: 0; }
   .side { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
   .box { background: var(--ink-2); border-radius: 0.8rem; padding: 0.8rem 0.9rem; }
   .box h4 { font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; color: var(--muted); margin: 0 0 0.6rem; }
@@ -196,7 +196,11 @@
 <div id="bgfx"></div>
 <div id="app"></div>
 <div id="fx"></div>
-<div class="corner"><button id="snd">Sound: on</button><button id="cred">Credits</button><button id="fs">Full screen</button></div>
+<div class="corner"><button id="snd">Sound: on</button><button id="hist">History</button><button id="cred">Credits</button><button id="fs">Full screen</button></div>
+<div id="history" class="ov" style="display:none;z-index:20;cursor:pointer;justify-content:flex-start;padding-top:3rem" onclick="this.style.display='none'">
+  <h1 style="font-size:3rem">History</h1><p style="font-size:1rem;color:var(--muted)">Newest first · click anywhere to close</p>
+  <div id="histlist" style="width:min(60rem,90vw);text-align:left;overflow:auto;flex:1"></div>
+</div>
 <div id="credits" class="ov" style="display:none;z-index:20;cursor:pointer" onclick="this.style.display='none'">
   <h1 style="font-size:3.4rem">Credits</h1>
   <p><b style="color:#fff">Made by Phu</b> for game nights around the table.</p>
@@ -233,6 +237,12 @@ function clock(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return Math.f
 document.getElementById('fs').onclick = () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
 const sndBtn = document.getElementById('snd');
 sndBtn.onclick = () => { soundOn = !soundOn; sndBtn.textContent = 'Sound: ' + (soundOn ? 'on' : 'off'); if (!soundOn) stopNight(); };
+function fillHistory() {
+  const el = document.getElementById('histlist'); if (!el) return;
+  const log = (S && S.game && S.game.log) || [];
+  el.innerHTML = log.length ? log.slice().reverse().map((l, i) => `<div style="padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:1.25rem;color:${i ? 'var(--paper-2)' : '#fff'};font-weight:${i ? 500 : 700}">${esc(l)}</div>`).join('') : '<p style="color:var(--muted)">Nothing has happened yet.</p>';
+}
+document.getElementById('hist').onclick = () => { fillHistory(); document.getElementById('history').style.display = 'flex'; };
 document.getElementById('cred').onclick = () => { document.getElementById('credits').style.display = 'flex'; };
 
 // Browsers only allow sound after someone clicks the page once.
@@ -500,7 +510,7 @@ function moodHtml(g) {
 }
 let lastMood = null;
 const GAME_SKELETON = `<div class="top"><div class="mood" id="r-mood"></div><div id="r-banner" style="flex:1;display:flex"></div><div id="r-gov" style="display:flex;gap:1rem"></div></div>
-  <div class="main"><div class="side" id="r-left"></div><div id="r-boards" style="min-height:0;height:100%"></div><div class="side" id="r-right"></div></div>
+  <div class="main"><div class="side" id="r-left"></div><div id="r-boards" style="min-height:0;height:100%"></div></div>
   <div class="seats" id="r-seats"></div><div id="r-ov"></div>`;
 let prevVoted = new Set(), ovKey = null, powerHold = null;
 function renderGame(g) {
@@ -531,7 +541,7 @@ function renderGame(g) {
         <div class="dots">${[1, 2, 3].map((i) => `<i class="${g.tracker >= i ? 'on' : ''} ${i === 3 ? 'chaos' : ''}"></i>`).join('')}</div>
         ${g.tracker === 2 ? '<div class="warn">One more fail = chaos!</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted.</div>'}</div>`);
   setRegion('r-boards', boardsHtml(g));
-  setRegion('r-right', `<div class="box log"><h4>History</h4>${g.log.slice().reverse().slice(0, 7).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`);
+  fillHistory();
   const nowVoted = new Set(g.players.filter((p) => p.voted || p.ready).map((p) => p.id));
   setRegion('r-seats', g.players.map((p, i) => `<div class="seat ${p.alive ? '' : 'dead'} ${p.isPresident ? 'pres' : ''} ${p.isChancellor ? 'chan' : ''} ${p.isNominee && !p.isChancellor ? 'nom' : ''} ${conn[p.id] === false ? 'off' : ''}">
       ${nowVoted.has(p.id) ? `<span class="voted ${prevVoted.has(p.id) ? 'old' : ''}">${ICON.check}</span>` : ''}
