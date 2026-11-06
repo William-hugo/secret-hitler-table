@@ -536,7 +536,7 @@ function renderGame(g) {
   setRegion('r-gov', `<div class="gov"><div class="g pres"><small>${ICON.crown} President</small><b>${esc(name(g.president))}</b></div>${chan}</div><div class="code">Room<b>${esc(L.code)}</b></div>`);
   setRegion('r-left', `
       <div class="box"><div class="pile"><img src="/assets/board-draw.png" alt="Draw pile"><b>${g.deck}</b></div></div>
-      <div class="box"><div class="pile"><img src="/assets/board-discard.png" alt="Discard pile"><b style="color:#fff;text-shadow:none">${g.discard}</b></div></div>
+      <div class="box"><div class="pile"><img src="/assets/board-discard.png" alt="Discard pile"><b>${g.discard}</b></div></div>
       <div class="box tcall"><h4>Election tracker</h4><div class="n">${g.tracker} / 3</div>
         <div class="dots">${[1, 2, 3].map((i) => `<i class="${g.tracker >= i ? 'on' : ''} ${i === 3 ? 'chaos' : ''}"></i>`).join('')}</div>
         ${g.tracker === 2 ? '<div class="warn">One more fail = chaos!</div>' : '<div class="note">3 failed governments in a row: the top policy is enacted.</div>'}</div>`);

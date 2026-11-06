@@ -24,7 +24,12 @@ const POWER_INFO = {
   execute: { name: 'Execution', desc: 'The President executes a player. If it\'s Hitler, Liberals win.' },
 };
 
-function shuffle(a, rng = Math.random) {
+// Cryptographically secure random numbers: shuffles can't be predicted or rigged.
+const crypto = require('crypto');
+const secureRandom = () => crypto.randomInt(0, 2 ** 32) / 2 ** 32;
+
+// Fisher–Yates shuffle: every order of the cards is equally likely.
+function shuffle(a, rng = secureRandom) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
@@ -35,7 +40,7 @@ function shuffle(a, rng = Math.random) {
 class Game {
   constructor(players, opts = {}) {
     // players: [{id, name}] in seating order (clockwise)
-    this.rng = opts.rng || Math.random;
+    this.rng = opts.rng || secureRandom;
     const n = players.length;
     if (!ROLE_TABLE[n]) throw new Error('Secret Hitler needs 5 to 10 players.');
     this.players = players.map((p) => ({ id: p.id, name: p.name, alive: true, role: null, party: null, investigated: false, notHitler: false }));
