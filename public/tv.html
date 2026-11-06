@@ -131,7 +131,8 @@
   @keyframes quietpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(224,91,43,0); } 50% { box-shadow: 0 0 1.2rem 0.3rem rgba(224,91,43,0.7); } }
   @keyframes moodswap { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: none; opacity: 1; } }
   .power { display: flex; gap: 2.5rem; align-items: center; text-align: left; }
-  .power img { width: 17rem; border-radius: 0.8rem; box-shadow: 0 0 0 0.4rem #b02a1a, 0 1rem 2rem rgba(0,0,0,0.5); animation: drop 0.9s cubic-bezier(.2,.9,.3,1.25) both; }
+  .power img { width: 19rem; border-radius: 1rem; box-shadow: 0 0 0 0.4rem #f6b53f, 0 1rem 2rem rgba(0,0,0,0.5); animation: drop 0.9s cubic-bezier(.2,.9,.3,1.25) both, powerglow 2.4s ease-in-out 1s infinite; }
+  @keyframes powerglow { 0%,100% { box-shadow: 0 0 0 0.4rem #f6b53f, 0 1rem 2rem rgba(0,0,0,0.5); } 50% { box-shadow: 0 0 0 0.4rem #f6b53f, 0 0 3rem 1rem rgba(246,181,63,0.55); } }
   .power .kicker { font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); font-size: 1.1rem; }
   .power h1 { font-size: 4.6rem; }
   .power p { max-width: 36rem; }
@@ -267,6 +268,31 @@ function sound() {
   if (g.phase === 'gameover') tone(g.winner === 'liberal' ? [392, 494, 587, 784] : [294, 247, 220, 147], 0.3);
   if (g.phase === 'executed') tone([110, 82], 0.4);
 }
+// A cheerful little "boop-bloop-ding" when someone joins: soft marimba notes, slightly different each time.
+function joinJingle() {
+  if (!soundOn) return;
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const base = [523.25, 587.33, 659.25, 698.46][Math.floor(Math.random() * 4)];
+    const notes = [[base, 0], [base * 1.5, 0.09], [base * 2, 0.18]];
+    const t0 = ctx.currentTime + 0.02;
+    // little "pop" at the start
+    const pop = ctx.createOscillator(), pg = ctx.createGain();
+    pop.type = 'sine'; pop.frequency.setValueAtTime(900, t0); pop.frequency.exponentialRampToValueAtTime(200, t0 + 0.08);
+    pg.gain.setValueAtTime(0.18, t0); pg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.1);
+    pop.connect(pg); pg.connect(ctx.destination); pop.start(t0); pop.stop(t0 + 0.12);
+    for (const [f, dt] of notes) {
+      for (const [mult, vol] of [[1, 0.22], [4, 0.04]]) { // marimba-ish: fundamental + bright overtone
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f * mult;
+        const t = t0 + 0.06 + dt;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + (mult === 1 ? 0.55 : 0.12));
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.6);
+      }
+    }
+  } catch (e) {}
+}
+
 function shuffleFx() {
   const g = S && S.game; if (!g) { prev.shuffles = null; return; }
   if (prev.shuffles !== null && g.shuffles > prev.shuffles) {
@@ -304,7 +330,7 @@ function renderLobby() {
   const old = lobbyIds || ids;
   if (lobbyIds) {
     const joined = L.players.filter((p) => !lobbyIds.includes(p.id));
-    if (joined.length) { tone([523, 659, 784, 1047], 0.09); if (soundOn && audioUnlocked) say(joined.map((p) => p.name.replace(' (bot)', '')).join(' and ') + ' joined the game'); }
+    if (joined.length) joinJingle();
     else if (ids.length < lobbyIds.length) tone([440, 330], 0.12);
   }
   lobbyIds = ids;
@@ -356,7 +382,7 @@ let lastMood = null;
 const GAME_SKELETON = `<div class="top"><div class="mood" id="r-mood"></div><div id="r-banner" style="flex:1;display:flex"></div><div id="r-gov" style="display:flex;gap:1rem"></div></div>
   <div class="main"><div class="side" id="r-left"></div><div id="r-boards" style="min-height:0;height:100%"></div><div class="side" id="r-right"></div></div>
   <div class="seats" id="r-seats"></div><div id="r-ov"></div>`;
-let prevVoted = new Set(), ovKey = null;
+let prevVoted = new Set(), ovKey = null, powerHold = null;
 function renderGame(g) {
   setMode('game', GAME_SKELETON);
   const L = S.lobby;
@@ -400,8 +426,13 @@ function renderGame(g) {
       </div></div>`).join(''));
   prevVoted = nowVoted;
   // overlays: animate only when a new overlay appears
-  const ov = overlay(g);
-  const key = g.phase + ':' + a.at;
+  let ov = overlay(g);
+  let key = g.phase + ':' + a.at;
+  if (g.phase === 'power' && ov) { if (!powerHold || powerHold.key !== key) powerHold = { key, html: ov, until: Date.now() + 9000 }; }
+  else if (powerHold && Date.now() < powerHold.until && g.phase !== 'gameover') {
+    ov = powerHold.html; key = powerHold.key;
+    clearTimeout(powerHold.t); powerHold.t = setTimeout(() => render(), powerHold.until - Date.now() + 50);
+  }
   const html = ov ? ov.replace('<div class="ov', `<div class="ov ${key === ovKey ? 'stay' : ''}`) : '';
   if (ov && key === ovKey && cache['r-ov'] && cache['r-ov'].replace(/ov stay/, 'ov ') === html.replace(/ov stay/, 'ov ')) { /* unchanged */ }
   else setRegion('r-ov', html);
@@ -439,13 +470,13 @@ function overlay(g) {
   if (g.phase === 'power' && g.power) {
     const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
     const how = { investigate: 'They will secretly see one player\'s party membership card.', special: 'They choose who will be the next Presidential Candidate.', peek: 'They secretly look at the top three policies of the draw pile.', execute: 'They must choose a player to kill. If it is Hitler, the Liberals win.' }[g.power];
-    return `<div class="ov"><div class="power"><img src="/assets/power-${g.power}.png" alt=""><div>
+    return `<div class="ov"><div class="power"><img src="/assets/power-${g.power}.svg" alt=""><div>
       <div class="kicker">Presidential power unlocked</div><h1>${esc(g.powerInfo.name)}</h1>
       <p>The Fascist policy just enacted gives President <b style="color:#fff">${esc(name(g.president))}</b> a power. ${how}</p>
       <p style="margin-top:1rem;color:var(--gold);font-weight:600">${esc(name(g.president))}, use it on your phone now.${g.fascist === 5 ? ' Veto power is now unlocked too.' : ''}</p></div></div></div>`;
   }
   if (g.phase === 'powerResult') {
-    return `<div class="ov"><div class="power"><img src="/assets/power-investigate.png" alt=""><div>
+    return `<div class="ov"><div class="power"><img src="/assets/power-investigate.svg" alt=""><div>
       <div class="kicker">Investigate loyalty</div><h1>Investigation</h1><p>${esc(g.announce.text)} Only the President sees the result. They may tell the truth, or lie.</p></div></div></div>`;
   }
   if (g.phase === 'executed') {

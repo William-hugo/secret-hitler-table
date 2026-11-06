@@ -125,7 +125,7 @@ function driveBots(room) {
     if (a.type === 'ready' && a.done) continue;
     if (['dead', 'gameover'].includes(a.type)) continue;
     p.botKey = key;
-    const delay = a.type === 'ready' ? 600 : 1200 + Math.random() * 1800;
+    const delay = a.type === 'ready' ? 600 : ['power', 'peek', 'investigation'].includes(a.type) ? 6000 + Math.random() * 3000 : 1200 + Math.random() * 1800;
     setTimeout(() => {
       if (room.game !== g) return;
       let r;
