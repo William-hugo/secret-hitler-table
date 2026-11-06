@@ -108,6 +108,52 @@ function broadcast(room) {
   driveBots(room);
 }
 
+// ---- host actions (shared by the host's phone and the TV) ----
+function pickNewHost(room) {
+  const humans = room.players.filter((p) => !p.bot);
+  const next = humans.find((p) => p.sockets.size > 0) || humans[0];
+  room.hostId = next ? next.id : null;
+}
+const HOST_OPS = {
+  start(room) {
+    if (room.game && room.game.phase !== 'gameover') return 'A game is already running.';
+    if (room.players.length < 5) return 'You need at least 5 players.';
+    room.game = new Game(room.players.map((p) => ({ id: p.id, name: p.name })), { classic: room.options.classic });
+  },
+  move(room, id, dir) {
+    if (room.game) return;
+    const i = room.players.findIndex((p) => p.id === id);
+    const j = i + Number(dir);
+    if (i < 0 || j < 0 || j >= room.players.length) return;
+    [room.players[i], room.players[j]] = [room.players[j], room.players[i]];
+  },
+  addBot(room) {
+    if (room.game) return;
+    if (room.players.length >= 10) return 'The room is full (10 players).';
+    const used = new Set(room.players.map((p) => p.name));
+    const name = BOT_NAMES.map((n) => n + ' (bot)').find((n) => !used.has(n));
+    room.players.push({ id: crypto.randomUUID().slice(0, 8), token: null, name, bot: true, sockets: new Set() });
+  },
+  removeBots(room) { if (!room.game) room.players = room.players.filter((p) => !p.bot); },
+  option(room, key, val) { if (!room.game && key === 'classic') room.options.classic = !!val; },
+  skipNight(room) { return room.game && room.game.endNight(); },
+  kick(room, id) {
+    if (room.game) return 'You can only remove players in the lobby.';
+    room.players = room.players.filter((p) => p.id !== id);
+    if (room.hostId === id) pickNewHost(room);
+  },
+  makeHost(room, id) {
+    const p = room.players.find((x) => x.id === id);
+    if (!p || p.bot) return 'Bots can\'t be the host.';
+    room.hostId = id;
+  },
+  lobby(room) {
+    if (room.game && room.game.phase !== 'gameover') return 'Finish the game first.';
+    room.game = null;
+  },
+  abort(room) { clearTimeout(room.timer); room.game = null; },
+};
+
 // ---- practice bots: random players so you can try the game with fewer people ----
 const BOT_NAMES = ['Ada', 'Max', 'Rosa', 'Otto', 'Clara', 'Felix', 'Greta', 'Hans', 'Ida'];
 function driveBots(room) {
@@ -209,49 +255,20 @@ io.on('connection', (socket) => {
   socket.on('tv:nightDone', () => {
     if (room && room.game && room.game.phase === 'night' && socket.rooms.has(`tv:${room.code}`)) { room.game.endNight(); broadcast(room); }
   });
-  socket.on('host:start', guard(() => {
-    if (!isHost()) return 'Only the host can start.';
-    if (room.game && room.game.phase !== 'gameover') return 'A game is already running.';
-    if (room.players.length < 5) return 'You need at least 5 players.';
-    room.game = new Game(room.players.map((p) => ({ id: p.id, name: p.name })), { classic: room.options.classic });
-  }));
-  socket.on('host:move', guard((id, dir) => {
-    if (!isHost() || room.game) return;
-    const i = room.players.findIndex((p) => p.id === id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= room.players.length) return;
-    [room.players[i], room.players[j]] = [room.players[j], room.players[i]];
-  }));
-  socket.on('host:addBot', guard(() => {
-    if (!isHost() || room.game) return;
-    if (room.players.length >= 10) return 'The room is full (10 players).';
-    const used = new Set(room.players.map((p) => p.name));
-    const name = BOT_NAMES.map((n) => n + ' (bot)').find((n) => !used.has(n));
-    room.players.push({ id: crypto.randomUUID().slice(0, 8), token: null, name, bot: true, sockets: new Set() });
-  }));
-  socket.on('host:option', guard((key, val) => {
-    if (!isHost() || room.game) return;
-    if (key === 'classic') room.options.classic = !!val;
-  }));
-  socket.on('host:skipNight', guard(() => { if (!isHost()) return 'Only the host can skip.'; return room.game && room.game.endNight(); }));
-  socket.on('host:kick', guard((id) => {
-    if (!isHost() || room.game) return;
-    room.players = room.players.filter((p) => p.id !== id);
-  }));
-  socket.on('host:lobby', guard(() => {
-    if (!isHost()) return;
-    if (room.game && room.game.phase !== 'gameover') return 'Finish the game first.';
-    room.game = null;
-  }));
-  socket.on('host:abort', guard(() => {
-    if (!isHost()) return;
-    clearTimeout(room.timer);
-    room.game = null;
-  }));
+  // Host actions can come from the host's phone or from the TV screen itself.
+  for (const name of Object.keys(HOST_OPS)) {
+    socket.on('host:' + name, guard((...args) => (isHost() ? HOST_OPS[name](room, ...args) : 'Only the host can do that.')));
+  }
+  socket.on('tv:host', (name, ...args) => {
+    if (!room || !socket.rooms.has(`tv:${room.code}`) || !HOST_OPS[name]) return;
+    const res = HOST_OPS[name](room, ...args);
+    if (typeof res === 'string') socket.emit('toast', res);
+    broadcast(room);
+  });
   socket.on('leave', guard(() => {
     if (room.game) return 'You can\'t leave during a game.';
     room.players = room.players.filter((p) => p.id !== player.id);
-    if (room.hostId === player.id) room.hostId = room.players[0] ? room.players[0].id : null;
+    if (room.hostId === player.id) pickNewHost(room);
     player = null;
   }));
 
@@ -267,7 +284,12 @@ io.on('connection', (socket) => {
   socket.on('investigationDone', guard(() => g() && g().finishInvestigation(player.id)));
 
   socket.on('disconnect', () => {
-    if (player) player.sockets.delete(socket.id);
+    if (player) {
+      player.sockets.delete(socket.id);
+      // If the host's phone stays offline for 20 seconds, hand hosting to someone who is here.
+      const p = player, r = room;
+      setTimeout(() => { if (r.hostId === p.id && p.sockets.size === 0) { pickNewHost(r); broadcast(r); } }, 20000);
+    }
     if (room) broadcast(room);
   });
 });

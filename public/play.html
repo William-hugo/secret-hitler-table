@@ -142,9 +142,9 @@ function renderLobby() {
     <div class="panel">
       <h2>You're in</h2>
       <p class="muted">${n}/10 players. ${n < 5 ? `Waiting for ${5 - n} more.` : 'Ready when the host is.'} Look at the TV.</p>
-      ${me.isHost ? `<p class="muted">Put everyone in seating order, going clockwise. The presidency passes in this order.</p>` : ''}
-      <div class="list">${L.players.map((p, i) => `<div class="opt" style="cursor:default"><span style="color:var(--muted);width:18px">${i + 1}</span>${esc(p.name)}
-        ${me.isHost ? `<span class="small"><button data-mv="${p.id}" data-d="-1" aria-label="Move up">↑</button><button data-mv="${p.id}" data-d="1" aria-label="Move down">↓</button>${p.id !== me.id ? `<button data-kick="${p.id}" aria-label="Remove">✕</button>` : ''}</span>` : ''}</div>`).join('')}</div>
+      ${me.isHost ? `<p class="muted">Put everyone in seating order, going clockwise. The presidency passes in this order. You can also do all of this on the TV screen with a mouse, or tap ★ to make someone else the host.</p>` : `<p class="muted">Host: <b>${esc((L.players.find((p) => p.id === L.hostId) || {}).name || 'nobody yet')}</b>. Seats, bots and starting can also be done on the TV screen.</p>`}
+      <div class="list">${L.players.map((p, i) => `<div class="opt" style="cursor:default"><span style="color:var(--muted);width:18px">${i + 1}</span>${esc(p.name)}${p.id === L.hostId ? ' <span style="color:var(--gold)">★</span>' : ''}
+        ${me.isHost ? `<span class="small"><button data-mv="${p.id}" data-d="-1" aria-label="Move up">↑</button><button data-mv="${p.id}" data-d="1" aria-label="Move down">↓</button>${p.id !== me.id && !p.bot ? `<button data-host="${p.id}" aria-label="Make host">★</button>` : ''}${p.id !== me.id ? `<button data-kick="${p.id}" aria-label="Remove">✕</button>` : ''}</span>` : ''}</div>`).join('')}</div>
       ${me.isHost && n < 10 ? `<button class="btn alt" id="addBot">+ Add practice bot</button><p class="muted" style="font-size:0.85rem;margin-top:4px">Bots play randomly so you can practice with fewer people.</p>` : ''}
       ${me.isHost ? `<label class="toggle"><input type="checkbox" id="classic" ${L.options && L.options.classic ? 'checked' : ''}><span><b>Classic night phase</b><br><span class="muted">Phones don't show the Fascist team. Fascists find each other with eyes closed while the narrator talks, like the board game.</span></span></label>` : (L.options && L.options.classic ? '<p class="muted">Classic night phase is on.</p>' : '')}
       ${me.isHost ? `<button class="btn red" id="start" ${n < 5 ? 'disabled' : ''}>Start game</button>` : ''}
@@ -152,6 +152,7 @@ function renderLobby() {
     </div>`;
   app.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => socket.emit('host:move', b.dataset.mv, Number(b.dataset.d)));
   app.querySelectorAll('[data-kick]').forEach((b) => b.onclick = () => socket.emit('host:kick', b.dataset.kick));
+  app.querySelectorAll('[data-host]').forEach((b) => b.onclick = () => { if (confirm('Make ' + L.players.find((p) => p.id === b.dataset.host).name + ' the host?')) socket.emit('host:makeHost', b.dataset.host); });
   const cl = document.getElementById('classic'); if (cl) cl.onchange = () => socket.emit('host:option', 'classic', cl.checked);
   const ab = document.getElementById('addBot'); if (ab) ab.onclick = () => socket.emit('host:addBot');
   const st = document.getElementById('start'); if (st) st.onclick = () => socket.emit('host:start');

@@ -100,7 +100,7 @@
   .bar { width: 36rem; height: 0.5rem; background: rgba(255,255,255,0.12); border-radius: 1rem; overflow: hidden; }
   .bar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width 0.4s linear; }
   .btn { background: var(--fas); color: #fff; border: none; border-bottom: 0.3rem solid var(--fas-dark); border-radius: 0.5rem; padding: 0.7rem 1.6rem; font-family: var(--head); font-size: 1.5rem; cursor: pointer; }
-  .btn.ghost { background: transparent; border: 0.15rem solid #5a5248; color: var(--muted); font-size: 1rem; padding: 0.4rem 1rem; }
+  .btn.ghost { background: var(--ink-2); border: 0.15rem solid #5a5248; color: var(--muted); font-size: 1rem; padding: 0.4rem 1rem; }
   .shuffle { position: fixed; left: 50%; top: 7rem; transform: translateX(-50%); z-index: 6; background: var(--ink-2); border: 0.2rem solid var(--gold); border-radius: 0.8rem; padding: 0.9rem 1.4rem; display: flex; align-items: center; gap: 1.2rem; animation: slidein 0.4s ease both; }
   .shuffle .fan { width: 7rem; height: 5rem; position: relative; }
   .shuffle .fan img { position: absolute; left: 2rem; top: 0; width: 3.4rem; animation: riffle 1s ease-in-out infinite; }
@@ -136,6 +136,28 @@
   .power .kicker { font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); font-size: 1.1rem; }
   .power h1 { font-size: 4.6rem; }
   .power p { max-width: 36rem; }
+  /* lobby fun */
+  #bgfx { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; display: none; }
+  body.inlobby #bgfx { display: block; }
+  #app { position: relative; z-index: 1; }
+  #bgfx img { position: absolute; top: 100vh; opacity: 0.16; animation: drift linear infinite; filter: blur(0.5px); }
+  @keyframes drift { from { transform: translateY(0) rotate(var(--r0)); } to { transform: translateY(-140vh) rotate(var(--r1)); } }
+  .trio img { animation: bob 3.2s ease-in-out infinite, spin 9s ease-in-out infinite; }
+  .trio img:nth-child(2) { animation-delay: -1s, 3s; } .trio img:nth-child(3) { animation-delay: -2s, 6s; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-0.6rem) rotate(3deg); } }
+  @keyframes spin { 0%,80%,100% { rotate: y 0deg; } 90% { rotate: y 360deg; } }
+  .join { animation: slidein 0.5s ease both, breathe 4s ease-in-out 0.5s infinite; }
+  @keyframes breathe { 0%,100% { box-shadow: 0 0 0 0 rgba(246,181,63,0); } 50% { box-shadow: 0 0 2.5rem 0.4rem rgba(246,181,63,0.35); } }
+  .title-sway { display: inline-block; animation: sway 6s ease-in-out infinite; transform-origin: 50% 80%; }
+  @keyframes sway { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
+  .seat.joined { animation: joinpop 0.7s cubic-bezier(.2,.9,.3,1.4) both; }
+  @keyframes joinpop { 0% { transform: scale(0.4) rotate(-6deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .lob-list .seat .ctl { margin-left: auto; display: flex; gap: 0.25rem; }
+  .lob-list .seat .ctl button { background: #e2d6c3; border: none; border-radius: 0.3rem; font-size: 0.8rem; padding: 0.15rem 0.45rem; color: var(--ink); cursor: pointer; }
+  .lob-list .seat .ctl button:hover { background: var(--gold); }
+  .hostbar { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+  .hostbar button { font-size: 1rem; padding: 0.45rem 1rem; }
+  .hostbar label { color: var(--paper-2); font-size: 0.9rem; display: flex; gap: 0.4rem; align-items: center; cursor: pointer; }
   /* lobby */
   .lobby { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
   .join { background: var(--paper); color: var(--ink); border-radius: 1rem; padding: 1.6rem 2rem; text-align: center; animation: slidein 0.5s ease both; }
@@ -154,6 +176,7 @@
 </style>
 </head>
 <body>
+<div id="bgfx"></div>
 <div id="app"></div>
 <div id="fx"></div>
 <div class="corner"><button id="snd">Sound: on</button><button id="narr">Voice announcements: off</button><button id="fs">Full screen</button></div>
@@ -322,6 +345,15 @@ function roleCounts(n) {
   return t ? `${t[0]} Liberals, ${t[1]} Fascist${t[1] > 1 ? 's' : ''} + Hitler. ${n <= 6 ? 'Hitler will know who the Fascist is.' : 'Hitler will NOT know who the Fascists are.'}` : '';
 }
 
+function host(name, ...args) { socket.emit('tv:host', name, ...args); }
+socket.on('toast', (m) => { fx.innerHTML = `<div class="shuffle" style="border-color:var(--fas)"><div><h3>${esc(m)}</h3></div></div>`; setTimeout(() => { fx.innerHTML = ''; }, 3000); });
+(function floaters() {
+  const imgs = ['policy-liberal', 'policy-fascist', 'vote-yes', 'vote-no', 'party-membership', 'role-envelope-front', 'policy-liberal', 'policy-fascist', 'vote-yes', 'board-policy', 'policy-fascist', 'vote-no'];
+  document.getElementById('bgfx').innerHTML = imgs.map((f, i) => {
+    const w = 5 + Math.random() * 6, dur = 22 + Math.random() * 20;
+    return `<img src="/assets/${f}.png" alt="" style="left:${(i / imgs.length) * 95 + Math.random() * 4}vw;width:${w}rem;animation-duration:${dur}s;animation-delay:${-Math.random() * dur}s;--r0:${Math.round(Math.random() * 60 - 30)}deg;--r1:${Math.round(Math.random() * 360 - 180)}deg">`;
+  }).join('');
+})();
 let lobbyIds = null;
 function renderLobby() {
   const L = S ? S.lobby : { players: [], options: {} };
@@ -335,6 +367,7 @@ function renderLobby() {
   }
   lobbyIds = ids;
   setMode('lobby', '<div class="lobby" style="flex:1"><div id="r-join"></div><div id="r-players"></div></div>');
+  document.body.classList.add('inlobby');
   setRegion('r-join', `<div class="join">
       <div class="trio"><img src="/assets/role-liberal-2.png" alt=""><img src="/assets/role-hitler.png" alt=""><img src="/assets/role-fascist-1.png" alt=""></div>
       <h2 style="font-size:2rem">Scan to join</h2>
@@ -343,14 +376,21 @@ function renderLobby() {
       <div class="bigcode">${esc(info.code)}</div>
     </div>`);
   setRegion('r-players', `
-      <h1 style="font-size:3.4rem;color:#fff;margin-bottom:0.6rem">Secret Hitler</h1>
+      <h1 style="font-size:3.6rem;color:#fff;margin-bottom:0.6rem"><span class="title-sway">Secret Hitler</span></h1>
       <h2 style="font-size:1.8rem;color:var(--paper-2);margin-bottom:0.8rem">Players · ${n}/10</h2>
       <div class="lob-list">
-        ${L.players.map((p, i) => `<div class="seat ${p.connected ? '' : 'off'}" style="${old.includes(p.id) && cache['r-players'] ? 'animation:none' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}</div>`).join('') || '<div class="hint">Waiting for players…</div>'}
+        ${L.players.map((p, i) => `<div class="seat ${p.connected ? '' : 'off'} ${old.includes(p.id) && cache['r-players'] ? '' : 'joined'}" style="${old.includes(p.id) && cache['r-players'] ? 'animation:none' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(p.name)}</span>${p.id === L.hostId ? '<span class="tag p">Host</span>' : ''}
+          <span class="ctl"><button onclick="host('move','${p.id}',-1)" title="Move up">↑</button><button onclick="host('move','${p.id}',1)" title="Move down">↓</button>${!p.bot && p.id !== L.hostId ? `<button onclick="host('makeHost','${p.id}')" title="Make host">★</button>` : ''}<button onclick="host('kick','${p.id}')" title="Remove">✕</button></span></div>`).join('') || '<div class="hint">Waiting for players…</div>'}
+      </div>
+      <div class="hostbar">
+        <button class="btn" onclick="host('start')" ${n < 5 ? 'disabled style="opacity:.45"' : ''}>Start game</button>
+        ${n < 10 ? `<button class="btn ghost" onclick="host('addBot')">+ Practice bot</button>` : ''}
+        ${L.players.some((p) => p.bot) ? `<button class="btn ghost" onclick="host('removeBots')">Remove bots</button>` : ''}
+        <label><input type="checkbox" ${L.options && L.options.classic ? 'checked' : ''} onchange="host('option','classic',this.checked)"> Classic night phase</label>
       </div>
       <div class="hint">
         ${n >= 5 ? `<b style="color:var(--paper)">${roleCounts(n)}</b><br>` : `Need ${5 - n} more player${5 - n === 1 ? '' : 's'} (5–10). `}
-        Sit around the table and join in seating order, going clockwise — the presidency passes in this order. Your phone is your secret role card, your ballot and your policy hand.<br>
+        Sit around the table and join in seating order, going clockwise — the presidency passes in this order. Your phone is your secret role card, your ballot and your policy hand. Anyone with a mouse at the TV, or the host (★) on their phone, can reorder seats and start.<br>
         <b style="color:var(--paper)">Night phase:</b> ${L.options && L.options.classic ? 'Classic — phones don\'t show teams; Fascists find each other with eyes closed, like the board game.' : 'Phones show each Fascist their team, and the narrator still runs the eyes-closed ritual.'}
       </div>`);
 }
@@ -385,6 +425,7 @@ const GAME_SKELETON = `<div class="top"><div class="mood" id="r-mood"></div><div
 let prevVoted = new Set(), ovKey = null, powerHold = null;
 function renderGame(g) {
   setMode('game', GAME_SKELETON);
+  document.body.classList.remove('inlobby');
   const L = S.lobby;
   const a = g.announce || { title: '', text: '' };
   const conn = Object.fromEntries(L.players.map((p) => [p.id, p.connected]));
@@ -494,7 +535,7 @@ function overlay(g) {
       <img class="vict" style="width:${rows === 1 ? 34 : 26}rem" src="/assets/victory-${lib ? 'liberal' : 'fascist'}-header.png" alt="${lib ? 'Liberal' : 'Fascist'} victory">
       <p>${esc(g.winReason)}</p>
       <div class="roles" style="grid-template-columns:repeat(${cols}, ${cw}rem)">${ps.map((p, i) => `<div class="rcard ${p.alive ? '' : 'dead'}" style="animation-delay:${0.5 + i * 0.18}s"><img src="${roleCardSrc(p.role, p.art)}" alt="${ROLE_NAME[p.role]}"><b>${esc(p.name)}</b>${p.alive ? '' : '<small>executed</small>'}</div>`).join('')}</div>
-      <p style="font-size:1rem">The host can start a new game from their phone.</p></div>`;
+      <div style="display:flex;gap:1rem"><button class="btn" onclick="host('start')">Play again (same seats)</button><button class="btn ghost" onclick="host('lobby')">Back to lobby</button></div></div>`;
   }
   return '';
 }
