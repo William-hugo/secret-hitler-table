@@ -75,7 +75,7 @@ function guideSlides(n) {
       points: ['Some Fascist policies give the President a one-time power. The TV shows it when it happens.',
         `On the ${board} player board the powers are printed on the Fascist track.`,
         'The President must use the power before the next round.',
-        'Fascists love these powers. Liberals can use them too, to hunt Hitler.'],
+        'After investigating or peeking, the President may tell everyone what they saw, or lie. Nobody can check.'],
       visual: `<div class="gpows">${power('investigate', 'Investigate', 'See one player\'s party card')}${power('special', 'Special election', 'Pick the next President')}${power('peek', 'Policy peek', 'See the top 3 policies')}${power('execute', 'Execution', 'Kill a player')}</div>` },
     { title: 'Hitler, executions and veto',
       points: ['Once 3 Fascist policies are passed, electing Hitler as Chancellor ends the game: Fascists win. Anyone else elected is marked "Not Hitler".',

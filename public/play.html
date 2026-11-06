@@ -160,6 +160,7 @@ function renderLobby() {
       <div class="list">${L.players.map((p, i) => `<div class="opt" style="cursor:default"><span style="color:var(--muted);width:18px">${i + 1}</span>${esc(p.name)}${p.id === L.hostId ? ' <span style="color:var(--gold)">★</span>' : ''}
         ${me.isHost ? `<span class="small"><button data-mv="${p.id}" data-d="-1" aria-label="Move up">↑</button><button data-mv="${p.id}" data-d="1" aria-label="Move down">↓</button>${p.id !== me.id && !p.bot ? `<button data-host="${p.id}" aria-label="Make host">★</button>` : ''}${p.id !== me.id ? `<button data-kick="${p.id}" aria-label="Remove">✕</button>` : ''}</span>` : ''}</div>`).join('')}</div>
       ${me.isHost && n < 10 ? `<button class="btn alt" id="addBot">+ Add practice bot</button><p class="muted" style="font-size:0.85rem;margin-top:4px">Bots play randomly so you can practice with fewer people.</p>` : ''}
+      ${me.isHost ? `<label class="toggle"><input type="checkbox" id="narration" ${L.options && L.options.narration !== false ? 'checked' : ''}><span><b>Night narration</b><br><span class="muted">The TV plays the official narrator for the eyes-closed ritual. Turn off to read the steps from the TV yourself.</span></span></label>` : ''}
       ${me.isHost ? `<label class="toggle"><input type="checkbox" id="classic" ${L.options && L.options.classic ? 'checked' : ''}><span><b>Classic night phase</b><br><span class="muted">Phones don't show the Fascist team. Fascists find each other with eyes closed while the narrator talks, like the board game.</span></span></label>` : (L.options && L.options.classic ? '<p class="muted">Classic night phase is on.</p>' : '')}
       ${me.isHost ? `<button class="btn red" id="start" ${n < 5 ? 'disabled' : ''}>Start game</button>` : ''}
       <button class="btn alt" id="leave">Leave room</button>
@@ -169,6 +170,7 @@ function renderLobby() {
   app.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => socket.emit('host:move', b.dataset.mv, Number(b.dataset.d)));
   app.querySelectorAll('[data-kick]').forEach((b) => b.onclick = () => socket.emit('host:kick', b.dataset.kick));
   app.querySelectorAll('[data-host]').forEach((b) => b.onclick = () => { if (confirm('Make ' + L.players.find((p) => p.id === b.dataset.host).name + ' the host?')) socket.emit('host:makeHost', b.dataset.host); });
+  const nr = document.getElementById('narration'); if (nr) nr.onchange = () => socket.emit('host:option', 'narration', nr.checked);
   const cl = document.getElementById('classic'); if (cl) cl.onchange = () => socket.emit('host:option', 'classic', cl.checked);
   const ab = document.getElementById('addBot'); if (ab) ab.onclick = () => socket.emit('host:addBot');
   const st = document.getElementById('start'); if (st) st.onclick = () => socket.emit('host:start');
@@ -274,8 +276,8 @@ function actionHtml(a, g) {
       <div class="hold env" id="holdBig"><img class="envelope" src="/assets/role-envelope-front.png" alt="Hold to open your envelope"></div>
       <p class="head" style="font-size:1.2rem;margin:4px 0 8px">Press and hold to open</p>
       ${a.done ? '<p class="muted">Waiting for everyone else…</p>' : '<button class="btn" id="ready">I\'ve seen my role</button>'}</div>`;
-    case 'night': return `<div class="panel center"><div style="font-size:3rem">☾</div><h2>Night phase</h2><p class="muted">Put your phone face down and listen to the narrator on the TV. Close your eyes when told. Stay silent.</p>
-      ${S.me.isHost ? '<button class="btn alt" id="skipNight">Skip narration (host)</button>' : ''}</div>`;
+    case 'night': return `<div class="panel center"><div style="font-size:3rem">☾</div><h2>Night phase</h2><p class="muted">${S.lobby.options && S.lobby.options.narration === false ? 'Put your phone face down. Someone at the TV reads each step out loud. Close your eyes when told. Stay silent.' : 'Put your phone face down and listen to the narrator on the TV. Close your eyes when told. Stay silent.'}</p>
+      ${S.me.isHost ? `<label class="toggle" style="justify-content:center"><input type="checkbox" id="narrNow" ${S.lobby.options && S.lobby.options.narration !== false ? 'checked' : ''}><span>Night narration</span></label><button class="btn alt" id="skipNight">Skip the night phase (host)</button>` : ''}</div>`;
     case 'nominate': return `<div class="panel"><h2>You're the Presidential Candidate</h2><p class="muted">Talk it over with the table first, then nominate a Chancellor. Term-limited players aren't listed.</p>
       <div class="list">${a.options.map((o) => `<button class="opt ${sel === o.id ? 'sel' : ''}" data-opt="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>Nominate</button></div>`;
@@ -290,7 +292,7 @@ function actionHtml(a, g) {
       ${a.canVeto ? `<button class="btn alt" id="veto">${ICON.veto} Propose veto</button>` : ''}</div>`;
     case 'vetoAnswer': return `<div class="panel"><h2>Veto requested</h2><p>Chancellor <b>${esc(a.chancellor)}</b> wants to veto this agenda. If you agree, both policies are discarded and the election tracker moves.</p>
       ${cardsHtml(a.cards, 2)}<button class="btn" id="vyes">Agree to veto</button><button class="btn alt" id="vno">Refuse</button></div>`;
-    case 'peek': return `<div class="panel"><h2>Policy peek</h2><p class="muted">These are the next 3 policies, top one first. Remember them, then tap done. You may tell the truth or lie.</p>
+    case 'peek': return `<div class="panel"><h2>Policy peek</h2><p class="muted">These are the next 3 policies, top one first. Remember them, then tap done. You may tell everyone what you saw, or lie about it.</p>
       <div class="cards" style="grid-template-columns:repeat(3,1fr)">${a.cards.map((c) => policyCard(c)).join('')}</div><p class="muted" style="margin-top:6px">← top of deck</p>
       <button class="btn" id="confirm">Done</button></div>`;
     case 'power': return `<div class="panel"><div class="big-ico">${ICON[a.power]}</div><h2 class="center">${esc(a.info.name)}</h2><p class="muted center">${esc(a.info.desc)}</p>
@@ -298,7 +300,7 @@ function actionHtml(a, g) {
       <button class="btn red" id="confirm" ${sel ? '' : 'disabled'}>${a.power === 'execute' ? 'Execute' : a.power === 'special' ? 'Make next President' : 'Investigate'}</button></div>`;
     case 'investigation': return `<div class="panel center"><h2>${esc(a.name)} is…</h2><p class="muted">Party membership (this never shows who Hitler is).</p>
       <img class="party" src="${partyCardSrc(a.party)}" alt="${a.party} party membership">
-      <p class="muted">Only you saw this. You can share it or lie.</p><button class="btn" id="confirm">Done</button></div>`;
+      <p class="muted">Only you saw this. It's talk time: you may tell everyone the result, or lie about it.</p><button class="btn" id="confirm">Done</button></div>`;
     case 'dead': return `<div class="panel center"><div class="big-ico">${ICON.skull}</div><h2>You were executed</h2><p class="muted">You can't talk, vote, or run for office. Stay silent — don't reveal your role!</p></div>`;
     case 'gameover': return `<div class="panel center" style="background:${a.winner === 'liberal' ? '#2d6470' : '#8a2f10'};color:#fff;padding:0 0 16px;overflow:hidden"><img src="/assets/victory-${a.winner}-header.png" style="width:100%;display:block" alt="${a.winner} victory"><p style="padding:0 16px">${esc(a.reason)}</p>
       <img src="${roleCardSrc(S.mine.role, S.mine.art)}" style="width:45%;border-radius:10px" alt="">
@@ -315,6 +317,7 @@ function bindAction(a) {
   app.querySelectorAll('[data-vote]').forEach((b) => b.onclick = () => socket.emit('vote', b.dataset.vote === '1'));
   if ($('ready')) $('ready').onclick = () => socket.emit('ready');
   if ($('skipNight')) $('skipNight').onclick = () => socket.emit('host:skipNight');
+  if ($('narrNow')) $('narrNow').onchange = () => socket.emit('host:option', 'narration', $('narrNow').checked);
   if ($('veto')) $('veto').onclick = () => socket.emit('veto');
   if ($('vyes')) $('vyes').onclick = () => socket.emit('vetoAnswer', true);
   if ($('vno')) $('vno').onclick = () => socket.emit('vetoAnswer', false);

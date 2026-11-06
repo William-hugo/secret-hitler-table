@@ -118,6 +118,7 @@ class Game {
     if (this.phase !== 'nominate' || by !== this.president) return 'Not your turn.';
     if (!this.eligibleChancellors().includes(target)) return 'That player is not eligible.';
     this.nominee = target;
+    this.addLog(`${this.name(by)} nominated ${this.name(target)} for Chancellor.`);
     this.votes = {};
     this.phase = 'vote';
     this.say('Vote', `${this.name(this.president)} for President, ${this.name(target)} for Chancellor. Everyone vote on your phone.`);
@@ -141,7 +142,7 @@ class Game {
       this.lastPresident = this.president;
       this.lastChancellor = this.chancellor;
       this.tracker = 0;
-      this.addLog(`Elected: ${this.name(this.president)} (P) and ${this.name(this.chancellor)} (C), ${ja}–${this.lastVote.nein}.`);
+      this.addLog(`Elected ${ja}–${this.lastVote.nein}: President ${this.name(this.president)}, Chancellor ${this.name(this.chancellor)}.`);
       if (this.fascist >= 3) {
         if (this.p(this.chancellor).role === 'hitler') {
           return this.end('fascist', `Hitler was elected Chancellor.`);
@@ -179,7 +180,7 @@ class Game {
       this.tracker = 0;
       this.lastPresident = null;
       this.lastChancellor = null;
-      this.addLog(`Three failed governments — the country is in chaos. Top policy enacted.`);
+      this.addLog('Three failed governments in a row: the country falls into chaos.');
       this.enact(top, true);
       return;
     }
@@ -243,6 +244,7 @@ class Game {
     if (!this.vetoUnlocked) return 'Veto is not unlocked yet.';
     if (this.vetoRefused) return 'The President already refused a veto.';
     this.phase = 'veto';
+    this.addLog(`${this.name(this.chancellor)} proposed a veto.`);
     this.say('Veto proposed', `Chancellor ${this.name(this.chancellor)} wants to veto this agenda. President, do you agree?`);
   }
 
@@ -256,6 +258,7 @@ class Game {
       this.failGovernment();
     } else {
       this.vetoRefused = true;
+      this.addLog(`${this.name(this.president)} refused the veto.`);
       this.phase = 'chancellor';
       this.say('Veto refused', `The President refused. Chancellor ${this.name(this.chancellor)} must enact a policy.`);
     }
@@ -267,10 +270,10 @@ class Game {
     this.power = null;
     if (policy === 'L') {
       this.liberal += 1;
-      this.addLog(`A Liberal policy was enacted${byChaos ? ' by chaos' : ''}.`);
+      this.addLog(byChaos ? 'Chaos: a Liberal policy was enacted from the top of the deck.' : `A Liberal policy was enacted. ${this.name(this.president)} and ${this.name(this.chancellor)} may now claim what they saw.`);
     } else {
       this.fascist += 1;
-      this.addLog(`A Fascist policy was enacted${byChaos ? ' by chaos' : ''}.`);
+      this.addLog(byChaos ? 'Chaos: a Fascist policy was enacted from the top of the deck.' : `A Fascist policy was enacted. ${this.name(this.president)} and ${this.name(this.chancellor)} may now claim what they saw.`);
       if (!byChaos) this.power = this.board[this.fascist - 1];
     }
     if (this.liberal >= 5) return this.end('liberal', 'Five Liberal policies were enacted.');
@@ -304,7 +307,7 @@ class Game {
     if (this.phase !== 'power' || by !== this.president) return 'Not your turn.';
     const pw = this.power;
     if (pw === 'peek') {
-      this.addLog(`${this.name(by)} peeked at the top three policies.`);
+      this.addLog(`${this.name(by)} peeked at the top 3 policies. They may share what they saw, or lie.`);
       this.peekCards = null;
       this.power = null;
       return this.nextPresident();
@@ -315,19 +318,19 @@ class Game {
       t.investigated = true;
       this.investigation = { targetId: target, party: t.party };
       this.phase = 'powerResult';
-      this.addLog(`${this.name(by)} investigated ${t.name}.`);
+      this.addLog(`${this.name(by)} investigated ${t.name}'s party membership. Only ${this.name(by)} saw it, and may share or lie.`);
       this.say('Investigation', `${this.name(by)} is looking at ${t.name}'s party membership.`);
       return;
     }
     if (pw === 'special') {
       this.specialNext = target;
-      this.addLog(`${this.name(by)} called a special election: ${t.name} is next.`);
+      this.addLog(`${this.name(by)} called a special election: ${t.name} is the next Presidential Candidate.`);
       this.power = null;
       return this.nextPresident();
     }
     if (pw === 'execute') {
       t.alive = false;
-      this.addLog(`${this.name(by)} executed ${t.name}.`);
+      this.addLog(`${this.name(by)} executed ${t.name}. ${t.name} may no longer talk or vote.`);
       this.power = null;
       if (t.role === 'hitler') return this.end('liberal', `${t.name} was Hitler and has been executed.`);
       this.say('Execution', `${t.name} has been executed. Their role stays secret. They can't talk, vote, or run.`, 'bad');

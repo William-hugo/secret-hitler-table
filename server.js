@@ -80,7 +80,7 @@ function makeCode() {
 function createRoom(base) {
   if (rooms.size >= 500) for (const [c, r] of rooms) if (r.players.every((p) => p.sockets.size === 0)) { rooms.delete(c); break; }
   const code = makeCode();
-  const room = { code, base, players: [], hostId: null, options: { classic: false }, guide: { on: false, i: 0 }, game: null, timer: null, created: Date.now() };
+  const room = { code, base, players: [], hostId: null, options: { classic: false, narration: true }, guide: { on: false, i: 0 }, game: null, timer: null, created: Date.now() };
   rooms.set(code, room);
   return room;
 }
@@ -137,7 +137,7 @@ const HOST_OPS = {
     room.players.push({ id: crypto.randomUUID().slice(0, 8), token: null, name, bot: true, sockets: new Set() });
   },
   removeBots(room) { if (!room.game) room.players = room.players.filter((p) => !p.bot); },
-  option(room, key, val) { if (!room.game && key === 'classic') room.options.classic = !!val; },
+  option(room, key, val) { if (['classic', 'narration'].includes(key)) room.options[key] = !!val; },
   skipNight(room) { return room.game && room.game.endNight(); },
   kick(room, id) {
     if (room.game) return 'You can only remove players in the lobby.';

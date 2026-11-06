@@ -259,9 +259,15 @@ function nightAudio() {
   const g = S && S.game;
   if (!g || g.phase !== 'night') { if (night) { stopNight(); night = null; } return; }
   const key = g.announce.at;
-  if (night && night.key === key) { if (night.blocked && audioUnlocked) { night.blocked = false; playClip(); } return; }
-  night = { key, list: nightPlaylist(g.playerCount), i: 0, audio: null, blocked: false };
-  if (!soundOn) return finishNight();
+  if (night && night.key === key) {
+    const wantSilent = !narrationOn() || !soundOn;
+    if (wantSilent && !night.silent) { stopNight(); night.silent = true; night.step = 0; cache['r-ov'] = null; render(); }
+    else if (!wantSilent && night.silent) { night.silent = false; night.i = 0; cache['r-ov'] = null; render(); playClip(); }
+    else if (night.blocked && audioUnlocked) { night.blocked = false; playClip(); }
+    return;
+  }
+  night = { key, list: nightPlaylist(g.playerCount), i: 0, audio: null, blocked: false, silent: !narrationOn() || !soundOn, step: 0 };
+  if (night.silent) return render();
   playClip();
 }
 function playClip() {
@@ -275,6 +281,20 @@ function playClip() {
   a.play().then(() => render()).catch(() => { night.blocked = true; render(); });
 }
 function finishNight() { socket.emit('tv:nightDone'); }
+function narrationOn() { return !(S && S.lobby && S.lobby.options && S.lobby.options.narration === false); }
+// Written version of the eyes-closed ritual, used when narration is turned off.
+function nightSteps(n) {
+  if (n <= 6) return ['Everyone, close your eyes and put a fist on the table.', 'Fascist and Hitler: open your eyes and look at each other.', 'Fascist and Hitler: close your eyes.', 'Everyone, open your eyes.'];
+  return ['Everyone, close your eyes and put a fist on the table.', 'Fascists (not Hitler): open your eyes and look around.', 'Hitler: keep your eyes closed and raise your thumb, so the Fascists can see who you are.', 'Fascists: close your eyes. Hitler: put your thumb down.', 'Everyone, open your eyes.'];
+}
+function nightStep(d) {
+  if (!night) return;
+  const steps = nightSteps(S.game.playerCount);
+  night.step += d;
+  if (night.step >= steps.length) return finishNight();
+  if (night.step < 0) night.step = 0;
+  cache['r-ov'] = null; render();
+}
 
 // ---------- spoken announcements (optional) ----------
 let voice = null;
@@ -411,6 +431,7 @@ function renderLobby() {
         ${n < 10 ? `<button class="btn ghost" onclick="host('addBot')">+ Practice bot</button>` : ''}
         ${L.players.some((p) => p.bot) ? `<button class="btn ghost" onclick="host('removeBots')">Remove bots</button>` : ''}
         <button class="btn ghost" onclick="host('guide', ${(L.guide && L.guide.i) || 0})">📖 How to play</button>
+        <label><input type="checkbox" ${L.options && L.options.narration !== false ? 'checked' : ''} onchange="host('option','narration',this.checked)"> Night narration</label>
         <label><input type="checkbox" ${L.options && L.options.classic ? 'checked' : ''} onchange="host('option','classic',this.checked)"> Classic night phase</label>
       </div>
       <div class="hint">
@@ -474,7 +495,7 @@ const QUIET = { roles: ['Quiet time', 'Look at your role in secret'], night: ['Q
 function moodHtml(g) {
   const q = QUIET[g.phase];
   if (q) return { key: 'quiet', html: `<div class="ic">🤫</div><div><b>${q[0]}</b><small>${q[1]}</small></div>` };
-  const sub = { nominate: 'Debate who should be Chancellor', vote: 'Argue before the last vote is in', power: 'Lobby the President', powerResult: 'Ask what they saw', enacted: 'Claims and accusations', voteResult: 'React to the vote', executed: 'The dead stay silent', gameover: 'Good game!' }[g.phase] || 'Discuss openly';
+  const sub = { nominate: 'Debate who should be Chancellor', vote: 'Argue before the last vote is in', power: g.power === 'investigate' || g.power === 'peek' ? 'The President may share what they see, or lie' : 'Lobby the President', powerResult: 'The President may share the result, or lie', enacted: 'Claims and accusations', voteResult: 'React to the vote', executed: 'The dead stay silent', gameover: 'Good game!' }[g.phase] || 'Discuss openly';
   return { key: 'talk', html: `<div class="ic">💬</div><div><b>Talk time</b><small>${sub}</small></div>` };
 }
 let lastMood = null;
@@ -547,6 +568,13 @@ function overlay(g) {
       <h1>Open your envelope</h1><p>Your phone is your secret role card. Hold the envelope on your phone to see your role and party, without letting anyone see. ${g.playerCount <= 6 ? 'With 5–6 players, Hitler knows who the Fascist is.' : 'With 7–10 players, Hitler does NOT know who the Fascists are.'} Tap "I've seen my role" when you're done.</p>
       <p style="font-family:var(--head);font-size:2.2rem;color:#fff">${ready} / ${g.players.length} ready</p></div>`;
   }
+  if (g.phase === 'night' && night && night.silent) {
+    const steps = nightSteps(g.playerCount), k = Math.min(night.step, steps.length - 1);
+    return `<div class="ov night" onclick="nightStep(1)" style="cursor:pointer"><div class="moon"></div><h1>Night phase</h1>
+      <p style="font-size:.95rem;color:var(--muted)">Narration is off. Read each step out loud, then click anywhere for the next one. · Step ${k + 1} of ${steps.length}</p>
+      <p style="font-family:var(--head);font-size:3rem;color:#fff;max-width:60rem;line-height:1.25">${esc(steps[k])}</p>
+      <div style="display:flex;gap:1rem" onclick="event.stopPropagation()"><button class="btn ghost" onclick="nightStep(-1)">← Back</button><button class="btn" onclick="nightStep(1)">${k === steps.length - 1 ? 'Start the game' : 'Next step →'}</button><button class="btn ghost" onclick="finishNight()">Skip</button></div></div>`;
+  }
   if (g.phase === 'night') {
     const blocked = night && night.blocked;
     return `<div class="ov night"><div class="moon"></div><h1>Night phase</h1>
@@ -565,7 +593,8 @@ function overlay(g) {
   if (g.phase === 'enacted' && g.lastEnacted) {
     const e = g.lastEnacted;
     return `<div class="ov"><h1>${e.byChaos ? 'Chaos!' : (e.policy === 'L' ? 'Liberal' : 'Fascist') + ' policy enacted'}</h1>${policyCard(e.policy, 'bigcard')}
-      <p>${g.power ? `This slot on the Fascist board has a presidential power: <b style="color:var(--gold)">${esc(g.powerInfo.name)}</b>. It comes next…` : esc(g.announce.text || '')}</p></div>`;
+      <p>${g.power ? `This slot on the Fascist board has a presidential power: <b style="color:var(--gold)">${esc(g.powerInfo.name)}</b>. It comes next…` : esc(g.announce.text || '')}</p>
+      ${e.byChaos ? '' : '<p style="font-size:1.1rem;color:#bfe3a5">💬 Quiet time is over: the President and Chancellor may now say which policies they saw, or lie.</p>'}</div>`;
   }
   if (g.phase === 'power' && g.power) {
     const name = (id) => (g.players.find((p) => p.id === id) || {}).name || '';
@@ -573,11 +602,13 @@ function overlay(g) {
     return `<div class="ov"><div class="power"><img src="/assets/power-${g.power}.svg" alt=""><div>
       <div class="kicker">Presidential power unlocked</div><h1>${esc(g.powerInfo.name)}</h1>
       <p>The Fascist policy just enacted gives President <b style="color:#fff">${esc(name(g.president))}</b> a power. ${how}</p>
-      <p style="margin-top:1rem;color:var(--gold);font-weight:600">${esc(name(g.president))}, use it on your phone now.${g.fascist === 5 ? ' Veto power is now unlocked too.' : ''}</p></div></div></div>`;
+      <p style="margin-top:1rem;color:var(--gold);font-weight:600">${esc(name(g.president))}, use it on your phone now.${g.fascist === 5 ? ' Veto power is now unlocked too.' : ''}</p>
+      ${g.power === 'investigate' || g.power === 'peek' ? `<p style="margin-top:1rem;background:#3b7d3a;color:#fff;border-radius:.5rem;padding:.6rem 1rem;font-weight:600">💬 Afterwards the President may tell everyone what they saw, or lie about it. Only they know the truth.</p>` : ''}</div></div></div>`;
   }
   if (g.phase === 'powerResult') {
     return `<div class="ov"><div class="power"><img src="/assets/power-investigate.svg" alt=""><div>
-      <div class="kicker">Investigate loyalty</div><h1>Investigation</h1><p>${esc(g.announce.text)} Only the President sees the result. They may tell the truth, or lie.</p></div></div></div>`;
+      <div class="kicker">Investigate loyalty</div><h1>Investigation</h1><p>${esc(g.announce.text)}</p>
+      <p style="margin-top:1rem;background:#3b7d3a;color:#fff;border-radius:.5rem;padding:.6rem 1rem;font-weight:600">💬 Only the President sees the party card. They may tell everyone the result, or lie about it.</p></div></div></div>`;
   }
   if (g.phase === 'executed') {
     return `<div class="ov"><img src="/assets/player-icon-hitler.png" style="width:9rem;animation:popdot .8s ease both" alt=""><h1>${esc(g.announce.title)}</h1><p>${esc(g.announce.text)}</p></div>`;
