@@ -162,15 +162,17 @@
   .guide { position: fixed; inset: 0; z-index: 7; background: #2b2621; display: flex; flex-direction: column; padding: 2rem 3rem 3rem; animation: fade .3s ease both; }
   .guide .gtop { display: flex; align-items: center; gap: 1rem; color: var(--muted); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: .85rem; }
   .guide .gtop .dots { display: flex; gap: .35rem; margin-left: auto; } .guide .gtop .dots i { width: .7rem; height: .7rem; border-radius: 50%; background: #5a5248; } .guide .gtop .dots i.on { background: var(--gold); }
-  .guide .gbody { flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 3rem; align-items: center; min-height: 0; animation: slidein .45s ease both; }
+  .guide { cursor: pointer; }
+  .guide .gbody { flex: 1; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 3rem; align-items: center; min-height: 0; animation: slidein .45s ease both; }
+  .guide .gvis { overflow: hidden; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .guide .fit { transform-origin: center; }
   .guide h1 { font-size: 4.4rem; color: #fff; margin-bottom: 1.2rem; }
   .guide ol { margin: 0; padding: 0; list-style: none; counter-reset: g; }
   .guide li { counter-increment: g; display: flex; gap: 1rem; font-size: 1.5rem; line-height: 1.45; color: var(--paper); margin-bottom: 1rem; animation: gin .5s ease both; }
   .guide li::before { content: counter(g); flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--fas); color: #fff; font-family: var(--head); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-top: .15rem; }
   .guide li:nth-child(2) { animation-delay: .1s; } .guide li:nth-child(3) { animation-delay: .2s; } .guide li:nth-child(4) { animation-delay: .3s; }
-  .guide .gvis { font-size: 2.1rem; }
-  .guide .gvis .gboards img, .guide .gvis .gwide { width: 22em; } .guide .gvis .gdeck { width: 22em; } .guide .gvis .gdeck img { width: 2.5em; }
-  .guide .gnav { display: flex; gap: 1rem; align-items: center; justify-content: center; }
+  .guide .gvis { font-size: 1.6rem; }
+  .guide .gnav { display: flex; gap: 1rem; align-items: center; justify-content: center; margin-top: 1rem; cursor: default; }
   .guide .gnav .btn { min-width: 12rem; }
   .guide .hint2 { color: var(--muted); font-size: .9rem; }
   /* lobby */
@@ -194,8 +196,15 @@
 <div id="bgfx"></div>
 <div id="app"></div>
 <div id="fx"></div>
-<div class="corner"><button id="snd">Sound: on</button><button id="narr">Voice announcements: off</button><button id="fs">Full screen</button></div>
-<div class="credit">Secret Hitler by Goat, Wolf &amp; Cabbage · art adapted from Secret Hitler Online by ShrimpCryptid · CC BY-NC-SA 4.0 · fan-made, not for sale</div>
+<div class="corner"><button id="snd">Sound: on</button><button id="cred">Credits</button><button id="fs">Full screen</button></div>
+<div id="credits" class="ov" style="display:none;z-index:20;cursor:pointer" onclick="this.style.display='none'">
+  <h1 style="font-size:3.4rem">Credits</h1>
+  <p><b style="color:#fff">Made by Phu</b> for game nights around the table.</p>
+  <p><i>Secret Hitler</i> by Max Temkin, Mike Boxleiter, Tommy Maranges and Mac Schubert, published by Goat, Wolf &amp; Cabbage.</p>
+  <p>Artwork adapted from <i>Secret Hitler Online</i> by ShrimpCryptid. Narration from the official Secret Hitler app.</p>
+  <p>Licensed CC BY-NC-SA 4.0 · fan-made, free, not for sale, not affiliated with the publisher.</p>
+  <p style="font-size:1rem;color:var(--muted)">Click anywhere to close</p>
+</div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/common.js"></script>
 <script src="/guide.js"></script>
@@ -224,8 +233,7 @@ function clock(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return Math.f
 document.getElementById('fs').onclick = () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
 const sndBtn = document.getElementById('snd');
 sndBtn.onclick = () => { soundOn = !soundOn; sndBtn.textContent = 'Sound: ' + (soundOn ? 'on' : 'off'); if (!soundOn) stopNight(); };
-const narrBtn = document.getElementById('narr');
-narrBtn.onclick = () => { voiceOn = !voiceOn; narrBtn.textContent = 'Voice announcements: ' + (voiceOn ? 'on' : 'off'); if (voiceOn) say('Voice announcements on.'); };
+document.getElementById('cred').onclick = () => { document.getElementById('credits').style.display = 'flex'; };
 
 // Browsers only allow sound after someone clicks the page once.
 function unlockAudio() {
@@ -410,20 +418,34 @@ function renderLobby() {
         Sit around the table and join in seating order, going clockwise — the presidency passes in this order. Your phone is your secret role card, your ballot and your policy hand. Anyone with a mouse at the TV, or the host (★) on their phone, can reorder seats and start.<br>
         <b style="color:var(--paper)">Night phase:</b> ${L.options && L.options.classic ? 'Classic — phones don\'t show teams; Fascists find each other with eyes closed, like the board game.' : 'Phones show each Fascist their team, and the narrator still runs the eyes-closed ritual.'}
       </div>`);
-  setRegion('r-guide', guideHtml(L));
+  if (setRegion('r-guide', guideHtml(L))) { fitGuide(); setTimeout(fitGuide, 300); }
 }
 
 function guideHtml(L) {
   if (!L.guide || !L.guide.on) return '';
   const slides = guideSlides(L.players.length);
   const i = Math.min(L.guide.i, slides.length - 1), sl = slides[i];
-  return `<div class="guide"><div class="gtop">How to play · ${i + 1} / ${slides.length}<div class="dots">${slides.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div></div>
-    <div class="gbody" key="${i}"><div><h1>${esc(sl.title)}</h1><ol>${sl.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ol></div><div class="gvis">${sl.visual}</div></div>
-    <div class="gnav"><button class="btn ghost" onclick="host('guide', ${Math.max(0, i - 1)})" ${i === 0 ? 'disabled style="opacity:.4"' : ''}>← Back</button>
+  return `<div class="guide" onclick="guideNext()"><div class="gtop">How to play · ${i + 1} / ${slides.length}<div class="dots">${slides.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div></div>
+    <div class="gbody" key="${i}"><div><h1>${esc(sl.title)}</h1><ol>${sl.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ol></div><div class="gvis"><div class="fit">${sl.visual}</div></div></div>
+    <div class="gnav" onclick="event.stopPropagation()"><button class="btn ghost" onclick="host('guide', ${Math.max(0, i - 1)})" ${i === 0 ? 'disabled style="opacity:.4"' : ''}>← Back</button>
       ${i < slides.length - 1 ? `<button class="btn" onclick="host('guide', ${i + 1})">Next →</button>` : `<button class="btn" onclick="host('guide','close')">Done — let's play</button>`}
       <button class="btn ghost" onclick="host('guide','close')">Close</button>
-      <span class="hint2">Arrow keys work too. Everyone in the lobby sees this slide on their phone.</span></div></div>`;
+      <span class="hint2">Click anywhere on the slide for the next one.</span></div></div>`;
 }
+function guideNext() {
+  const L = S && S.lobby; if (!L || !L.guide || !L.guide.on) return;
+  const total = guideSlides(L.players.length).length;
+  host('guide', L.guide.i + 1 >= total ? 'close' : L.guide.i + 1);
+}
+// Shrink a slide's picture if it doesn't fit the screen.
+function fitGuide() {
+  document.querySelectorAll('.guide .fit').forEach((f) => {
+    const box = f.parentElement; f.style.transform = 'none';
+    const k = Math.min(1, (box.clientWidth - 8) / f.scrollWidth, (box.clientHeight - 8) / f.scrollHeight);
+    f.style.transform = `scale(${k})`;
+  });
+}
+window.addEventListener('resize', fitGuide);
 document.addEventListener('keydown', (e) => {
   const L = S && S.lobby; if (!L || !L.guide || !L.guide.on || (S && S.game)) return;
   const total = guideSlides(L.players.length).length;
